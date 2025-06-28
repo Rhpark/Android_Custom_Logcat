@@ -151,7 +151,7 @@ class LogTypeConfigBuilder {
     
     init {
         // 기본값: 모든 타입
-        all()
+        _types.addAll(LogxType.values())
     }
 }
 

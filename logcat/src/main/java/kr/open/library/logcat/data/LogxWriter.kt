@@ -26,16 +26,16 @@ internal class LogxWriter(private var config: LogxConfig) {
     private val stackInfoCache = mutableMapOf<String, String>()
     private var lastStackFrameHash = 0
     
-    // Lazy 초기화로 메모리 효율성 향상
-    private var logFilter: LogFilter by lazy { DefaultLogFilter(config) }
-    private var fileWriter: LogFileWriter by lazy { LogFileWriterFactory.create(config) }
+    // 초기화
+    private var logFilter: LogFilter = DefaultLogFilter(config)
+    private var fileWriter: LogFileWriter = LogFileWriterFactory.create(config)
 
-    // 포맷터들 - lazy 초기화
-    private val defaultFormatter by lazy { DefaultLogFormatter(config) }
-    private val jsonFormatter by lazy { JsonLogFormatter(config) }
-    private val threadIdFormatter by lazy { ThreadIdLogFormatter(config) }
-    private val parentFormatter by lazy { ParentLogFormatter(config, stackTrace, false) }
-    private val parentExtensionsFormatter by lazy { ParentLogFormatter(config, stackTrace, true) }
+    // 포맷터들
+    private var defaultFormatter = DefaultLogFormatter(config)
+    private var jsonFormatter = JsonLogFormatter(config)
+    private var threadIdFormatter = ThreadIdLogFormatter(config)
+    private var parentFormatter = ParentLogFormatter(config, stackTrace, false)
+    private var parentExtensionsFormatter = ParentLogFormatter(config, stackTrace, true)
     
     // 성능을 위한 설정 캐싱
     @Volatile
@@ -58,13 +58,18 @@ internal class LogxWriter(private var config: LogxConfig) {
         lastStackFrameHash = 0
         
         // 기존 리소스 정리
-        if (::fileWriter.isInitialized) {
-            fileWriter.cleanup()
-        }
+        fileWriter.cleanup()
         
-        // lazy 델리게이트 재설정을 위한 새 인스턴스 생성
+        // 새 인스턴스 생성
         logFilter = DefaultLogFilter(config)
         fileWriter = LogFileWriterFactory.create(config)
+        
+        // 포맷터들 재생성
+        defaultFormatter = DefaultLogFormatter(config)
+        jsonFormatter = JsonLogFormatter(config)
+        threadIdFormatter = ThreadIdLogFormatter(config)
+        parentFormatter = ParentLogFormatter(config, stackTrace, false)
+        parentExtensionsFormatter = ParentLogFormatter(config, stackTrace, true)
     }
 
     /**

@@ -8,58 +8,32 @@ import kr.open.library.logcat.vo.LogxType
  * SRP: 기본 로그 포맷팅에만 집중
  * 메모리 최적화: StringBuilder 풀링, String 재사용
  */
-class DefaultLogFormatter(private val config: LogxConfig) : EfficientLogFormatter() {
+class DefaultLogFormatter(private val config: LogxConfig) : LogFormatter {
     
-    // 자주 사용되는 문자열들을 미리 생성하여 재사용 (메모리 최적화)
-    private val appNameWithBracket = "${config.appName} ["
-    private val typeStrings = mapOf(
-        LogxType.THREAD_ID to " [T_ID] :",
-        LogxType.PARENT to " [PARENT] :",
-        LogxType.JSON to " [JSON] :",
-        LogxType.VERBOSE to " :",
-        LogxType.DEBUG to " :",
-        LogxType.INFO to " :",
-        LogxType.WARN to " :",
-        LogxType.ERROR to " :"
-    )
     
     override fun format(tag: String, message: Any?, logType: LogxType, stackInfo: String): FormattedLog? {
         if (!shouldFormat(logType)) return null
         
-        return buildFormattedMessage(tag, message, logType, stackInfo) { sb ->
-            // StringBuilder를 사용한 효율적인 문자열 구성
-            sb.append(appNameWithBracket)
-                .append(tag)
-                .append(']')
-                .append(typeStrings[logType] ?: " :")
-                .append(' ')
-                .append(stackInfo)
-                .append(message ?: "")
-        }
+        val formattedTag = createFormattedTag(tag, logType)
+        val formattedMessage = createFormattedMessage(message, stackInfo)
+        
+        return FormattedLog(formattedTag, formattedMessage, logType)
     }
     
-    /**
-     * 고성능 버전: StringBuilder를 직접 받아서 사용
-     */
-    override fun formatTo(
-        stringBuilder: StringBuilder,
-        tag: String,
-        message: Any?,
-        logType: LogxType,
-        stackInfo: String
-    ): Boolean {
-        if (!shouldFormat(logType)) return false
-        
-        stringBuilder.clear()
-            .append(appNameWithBracket)
-            .append(tag)
-            .append(']')
-            .append(typeStrings[logType] ?: " :")
-            .append(' ')
-            .append(stackInfo)
-            .append(message ?: "")
-            
-        return true
+    private fun createFormattedTag(tag: String, logType: LogxType): String {
+        val typeString = getTypeString(logType)
+        return "${config.appName} [$tag]$typeString"
+    }
+    
+    private fun createFormattedMessage(message: Any?, stackInfo: String): String {
+        return "$stackInfo${message ?: ""}"
+    }
+    
+    private fun getTypeString(logType: LogxType): String = when(logType) {
+        LogxType.THREAD_ID -> " [T_ID] :"
+        LogxType.PARENT -> " [PARENT] :"
+        LogxType.JSON -> " [JSON] :"
+        else -> " :"
     }
     
     private inline fun shouldFormat(logType: LogxType): Boolean {
