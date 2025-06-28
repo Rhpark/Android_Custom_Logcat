@@ -11,40 +11,60 @@ import kr.open.library.logcat.writer.LogFileWriter
 import kr.open.library.logcat.writer.LogFileWriterFactory
 
 /**
- * 리팩토링된 LogxWriter
+ * 최적화된 LogxWriter
  * SRP 원칙을 준수하여 각 책임을 별도의 클래스로 분리
- * - 포맷팅: LogFormatter 구현체들이 담당
+ * - 포맷팅: LogFormatter 구현체들이 담당  
  * - 필터링: LogFilter가 담당
  * - 파일 저장: LogFileWriter가 담당
+ * - 성능 최적화: lazy 초기화 및 캐싱 적용
  */
 internal class LogxWriter(private var config: LogxConfig) {
 
-    private val stackTrace = LogxStackTrace()
-    private var logFilter: LogFilter = DefaultLogFilter(config)
-    private var fileWriter: LogFileWriter = LogFileWriterFactory.create(config)
+    private val stackTrace by lazy { LogxStackTrace() }
+    
+    // 스택 트레이스 캐싱 (성능 최적화)
+    private val stackInfoCache = mutableMapOf<String, String>()
+    private var lastStackFrameHash = 0
+    
+    // Lazy 초기화로 메모리 효율성 향상
+    private var logFilter: LogFilter by lazy { DefaultLogFilter(config) }
+    private var fileWriter: LogFileWriter by lazy { LogFileWriterFactory.create(config) }
 
-    // 포맷터들
-    private var defaultFormatter: DefaultLogFormatter = DefaultLogFormatter(config)
-    private var jsonFormatter: JsonLogFormatter = JsonLogFormatter(config)
-    private var threadIdFormatter: ThreadIdLogFormatter = ThreadIdLogFormatter(config)
-    private var parentFormatter: ParentLogFormatter = ParentLogFormatter(config, stackTrace, false)
-    private var parentExtensionsFormatter: ParentLogFormatter = ParentLogFormatter(config, stackTrace, true)
+    // 포맷터들 - lazy 초기화
+    private val defaultFormatter by lazy { DefaultLogFormatter(config) }
+    private val jsonFormatter by lazy { JsonLogFormatter(config) }
+    private val threadIdFormatter by lazy { ThreadIdLogFormatter(config) }
+    private val parentFormatter by lazy { ParentLogFormatter(config, stackTrace, false) }
+    private val parentExtensionsFormatter by lazy { ParentLogFormatter(config, stackTrace, true) }
+    
+    // 성능을 위한 설정 캐싱
+    @Volatile
+    private var cachedIsDebug = config.isDebug
+    @Volatile
+    private var cachedDebugLogTypes = config.debugLogTypeList.toSet()
 
     /**
-     * 설정 업데이트 시 모든 의존성 재생성
+     * 설정 업데이트 시 캐시 무효화 및 의존성 재생성
      */
     fun updateConfig(newConfig: LogxConfig) {
         config = newConfig
+        
+        // 캐시 업데이트 (성능 최적화)
+        cachedIsDebug = newConfig.isDebug
+        cachedDebugLogTypes = newConfig.debugLogTypeList.toSet()
+        
+        // 스택 정보 캐시 초기화
+        stackInfoCache.clear()
+        lastStackFrameHash = 0
+        
+        // 기존 리소스 정리
+        if (::fileWriter.isInitialized) {
+            fileWriter.cleanup()
+        }
+        
+        // lazy 델리게이트 재설정을 위한 새 인스턴스 생성
         logFilter = DefaultLogFilter(config)
-        fileWriter.cleanup()
         fileWriter = LogFileWriterFactory.create(config)
-
-        // 포맷터들 재생성
-        defaultFormatter = DefaultLogFormatter(config)
-        jsonFormatter = JsonLogFormatter(config)
-        threadIdFormatter = ThreadIdLogFormatter(config)
-        parentFormatter = ParentLogFormatter(config, stackTrace, false)
-        parentExtensionsFormatter = ParentLogFormatter(config, stackTrace, true)
     }
 
     /**
@@ -231,8 +251,11 @@ internal class LogxWriter(private var config: LogxConfig) {
         }
     }
 
-    private fun shouldLog(logType: LogxType): Boolean {
-        return config.isDebug && config.debugLogTypeList.contains(logType)
+    /**
+     * 빠른 로그 레벨 체크 (캐시된 값 사용)
+     */
+    private inline fun shouldLog(logType: LogxType): Boolean {
+        return cachedIsDebug && cachedDebugLogTypes.contains(logType)
     }
 
     /**
