@@ -22,7 +22,7 @@ internal class LogxWriter(private var config: LogxConfig) {
     private val stackTrace = LogxStackTrace()
     private var logFilter: LogFilter = DefaultLogFilter(config)
     private var fileWriter: LogFileWriter = LogFileWriterFactory.create(config)
-    
+
     // 포맷터들
     private var defaultFormatter: DefaultLogFormatter = DefaultLogFormatter(config)
     private var jsonFormatter: JsonLogFormatter = JsonLogFormatter(config)
@@ -38,7 +38,7 @@ internal class LogxWriter(private var config: LogxConfig) {
         logFilter = DefaultLogFilter(config)
         fileWriter.cleanup()
         fileWriter = LogFileWriterFactory.create(config)
-        
+
         // 포맷터들 재생성
         defaultFormatter = DefaultLogFormatter(config)
         jsonFormatter = JsonLogFormatter(config)
@@ -52,7 +52,7 @@ internal class LogxWriter(private var config: LogxConfig) {
      */
     fun writeExtensions(tag: String, msg: Any?, type: LogxType) {
         if (!shouldLog(type)) return
-        
+
         try {
             val stackInfo = getExtensionsStackInfo(tag) ?: return
             writeLogWithFormatter(tag, msg, type, stackInfo, defaultFormatter)
@@ -66,7 +66,7 @@ internal class LogxWriter(private var config: LogxConfig) {
      */
     fun write(tag: String, msg: Any?, type: LogxType) {
         if (!shouldLog(type)) return
-        
+
         try {
             val stackInfo = getNormalStackInfo(tag) ?: return
             writeLogWithFormatter(tag, msg, type, stackInfo, defaultFormatter)
@@ -80,7 +80,7 @@ internal class LogxWriter(private var config: LogxConfig) {
      */
     fun writeThreadId(tag: String, msg: Any?) {
         if (!shouldLog(LogxType.THREAD_ID)) return
-        
+
         try {
             val stackInfo = getNormalStackInfo(tag) ?: return
             writeLogWithFormatter(tag, msg, LogxType.THREAD_ID, stackInfo, threadIdFormatter)
@@ -94,7 +94,7 @@ internal class LogxWriter(private var config: LogxConfig) {
      */
     fun writeParent(tag: String, msg: Any?) {
         if (!shouldLog(LogxType.PARENT)) return
-        
+
         try {
             val stackInfo = getNormalStackInfo(tag) ?: return
             writeParentLog(tag, msg, stackInfo, parentFormatter)
@@ -108,7 +108,7 @@ internal class LogxWriter(private var config: LogxConfig) {
      */
     fun writeExtensionsParent(tag: String, msg: Any?) {
         if (!shouldLog(LogxType.PARENT)) return
-        
+
         try {
             val stackInfo = getExtensionsStackInfo(tag) ?: return
             writeParentLog(tag, msg, stackInfo, parentExtensionsFormatter)
@@ -122,10 +122,10 @@ internal class LogxWriter(private var config: LogxConfig) {
      */
     fun writeJsonExtensions(tag: String, msg: String) {
         if (!shouldLog(LogxType.JSON)) return
-        
+
         try {
             val stackInfo = getExtensionsStackInfo(tag) ?: return
-            writeJsonLog(tag, msg, jsonFormatter)
+            writeJsonLog(tag, msg, stackInfo, jsonFormatter)
         } catch (e: Exception) {
             Log.e("LogxWriter", "Failed to write JSON extensions log: ${e.message}", e)
         }
@@ -136,20 +136,20 @@ internal class LogxWriter(private var config: LogxConfig) {
      */
     fun writeJson(tag: String, msg: String) {
         if (!shouldLog(LogxType.JSON)) return
-        
+
         try {
             val stackInfo = getNormalStackInfo(tag) ?: return
-            writeJsonLog(tag, msg, jsonFormatter)
+            writeJsonLog(tag, msg, stackInfo, jsonFormatter)
         } catch (e: Exception) {
             Log.e("LogxWriter", "Failed to write JSON log: ${e.message}", e)
         }
     }
 
     private fun writeLogWithFormatter(
-        tag: String, 
-        msg: Any?, 
-        type: LogxType, 
-        stackInfo: String, 
+        tag: String,
+        msg: Any?,
+        type: LogxType,
+        stackInfo: String,
         formatter: LogFormatter
     ) {
         val formatted = formatter.format(tag, msg, type, stackInfo) ?: return
@@ -163,7 +163,7 @@ internal class LogxWriter(private var config: LogxConfig) {
             outputLog(parentInfo)
             saveToFile(parentInfo)
         }
-        
+
         // 실제 메시지 출력
         formatter.format(tag, msg, LogxType.PARENT, stackInfo)?.let { mainLog ->
             outputLog(mainLog)
@@ -171,19 +171,19 @@ internal class LogxWriter(private var config: LogxConfig) {
         }
     }
 
-    private fun writeJsonLog(tag: String, msg: String, formatter: JsonLogFormatter) {
+    private fun writeJsonLog(tag: String, msg: String, stackInfo: String, formatter: JsonLogFormatter) {
         // JSON 시작 마커
-        val startMarker = formatter.format(tag, "=========JSON_START========", LogxType.JSON) ?: return
+        val startMarker = formatter.format(tag, "${stackInfo} ［ JSON_START ］", LogxType.JSON) ?: return
         outputLog(startMarker)
         saveToFile(startMarker)
-        
+
         // JSON 내용
         val jsonContent = formatter.format(tag, msg, LogxType.JSON) ?: return
         outputLog(jsonContent)
         saveToFile(jsonContent)
-        
+
         // JSON 종료 마커
-        val endMarker = formatter.format(tag, "=========JSON_END==========", LogxType.JSON) ?: return
+        val endMarker = formatter.format(tag, "［ JSON_END ］", LogxType.JSON) ?: return
         outputLog(endMarker)
         saveToFile(endMarker)
     }
@@ -212,7 +212,7 @@ internal class LogxWriter(private var config: LogxConfig) {
     private fun getNormalStackInfo(tag: String): String? {
         val stackInfo = stackTrace.getStackTrace()
         val fileName = stackInfo.fileName.split(".")[0]
-        
+
         return if (logFilter.shouldLog(tag, fileName)) {
             stackInfo.getMsgFrontNormal()
         } else {
@@ -223,7 +223,7 @@ internal class LogxWriter(private var config: LogxConfig) {
     private fun getExtensionsStackInfo(tag: String): String? {
         val stackInfo = stackTrace.getExtensionsStackTrace()
         val fileName = stackInfo.fileName.split(".")[0]
-        
+
         return if (logFilter.shouldLog(tag, fileName)) {
             stackInfo.getMsgFrontNormal()
         } else {

@@ -3,7 +3,7 @@ package kr.open.library.logcat.domain
 import android.util.Log
 import kr.open.library.logcat.Logx
 
-internal data class LogxStackTraceMetaData(private val item: StackTraceElement) {
+data class LogxStackTraceMetaData(private val item: StackTraceElement) {
 
     // 파일 이름을 한 번만 계산하고 저장
     val fileName: String by lazy {

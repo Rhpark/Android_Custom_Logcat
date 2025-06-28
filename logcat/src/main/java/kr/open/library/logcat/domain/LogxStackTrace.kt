@@ -3,10 +3,10 @@ package kr.open.library.logcat.domain
 import android.util.Log
 import kr.open.library.logcat.Logx
 
-internal class LogxStackTrace {
+class LogxStackTrace {
 
-    private val LOG_EXTENTIONS_PARENT_STACK_LEVEL = 9
-    private val LOG_PARENT_STACK_LEVEL = 8
+    private val LOG_EXTENTIONS_PARENT_STACK_LEVEL = 11
+    private val LOG_PARENT_STACK_LEVEL = 10
     private val LOG_EXTEPTIONS_STACK_LEVEL = 8
     private val LOG_NORMAL_STACK_LEVEL = 7
 
