@@ -6,7 +6,7 @@ import kr.open.library.logcat.vo.LogxType
 /**
  * API 레벨에 따른 안전한 기본 로그 경로 제공
  */
-private fun getDefaultLogPath(): String {
+public fun getDefaultLogPath(): String {
     return try {
         @Suppress("DEPRECATION")
         Environment.getExternalStorageDirectory().path

@@ -5,7 +5,7 @@ import kr.open.library.logcat.Logx
 
 class LogxStackTrace {
 
-    private val LOG_EXTENSIONS_PARENT_STACK_LEVEL = 11
+    private val LOG_EXTENSIONS_PARENT_STACK_LEVEL = 10
     private val LOG_PARENT_STACK_LEVEL = 10
     private val LOG_EXTENSIONS_STACK_LEVEL = 8
     private val LOG_NORMAL_STACK_LEVEL = 7

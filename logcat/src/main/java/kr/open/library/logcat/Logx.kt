@@ -1,7 +1,10 @@
 package kr.open.library.logcat
 
 import kr.open.library.logcat.config.LogxConfig
+import kr.open.library.logcat.config.LogxConfigBuilder
 import kr.open.library.logcat.config.LogxConfigManager
+import kr.open.library.logcat.config.LogxDslBuilder
+import kr.open.library.logcat.config.logxConfig
 import kr.open.library.logcat.data.LogxWriter
 import kr.open.library.logcat.vo.LogxType
 
@@ -22,10 +25,10 @@ import kr.open.library.logcat.vo.LogxType
  */
 object Logx : ILogx {
 
-    private const val DEFAULT_TAG = ""
+    public const val DEFAULT_TAG = ""
 
-    private val configManager = LogxConfigManager()
-    private val logWriter = LogxWriter(configManager.config)
+    public val configManager = LogxConfigManager()
+    public val logWriter = LogxWriter(configManager.config)
 
     init {
         // 설정 변경 시 LogxWriter에 자동 전파
@@ -91,87 +94,58 @@ object Logx : ILogx {
      * }
      * ```
      */
-    fun configure(block: kr.open.library.logcat.config.LogxDslBuilder.() -> Unit) {
-        val newConfig = kr.open.library.logcat.config.logxConfig(block)
+//    fun configure(block: LogxConfigBuilder.() -> Unit) {
+    fun configure(block: LogxDslBuilder.() -> Unit) {
+        val newConfig = logxConfig(block)
         updateConfig(newConfig)
     }
 
-    // 기본 로깅 메서드들 - 보일러플레이트 제거 및 성능 개선
-    @JvmOverloads
-    inline fun log(type: LogxType, tag: String = DEFAULT_TAG, msg: Any? = "") = 
-        logWriter.write(tag, msg, type)
-    
-    @JvmOverloads  
-    inline fun logExt(type: LogxType, tag: String = DEFAULT_TAG, msg: Any? = "") =
-        logWriter.writeExtensions(tag, msg, type)
+    // 기본 로깅 메서드들 - 중복 제거 및 단순화
+    override fun v() = logWriter.write(DEFAULT_TAG, "", LogxType.VERBOSE)
+    override fun v(msg: Any?) = logWriter.write(DEFAULT_TAG, msg, LogxType.VERBOSE)
+    override fun v(tag: String, msg: Any?) = logWriter.write(tag, msg, LogxType.VERBOSE)
+    fun v1(msg: Any?) = logWriter.writeExtensions(DEFAULT_TAG, msg, LogxType.VERBOSE)
+    fun v1(tag: String, msg: Any?) = logWriter.writeExtensions(tag, msg, LogxType.VERBOSE)
 
-    // 기존 API 호환성 유지 (inline으로 성능 개선)
-    override inline fun v() = log(LogxType.VERBOSE)
-    override inline fun v(msg: Any?) = log(LogxType.VERBOSE, msg = msg)
-    override inline fun v(tag: String, msg: Any?) = log(LogxType.VERBOSE, tag, msg)
-    inline fun v1(msg: Any?) = logExt(LogxType.VERBOSE, msg = msg)
-    inline fun v1(tag: String, msg: Any?) = logExt(LogxType.VERBOSE, tag, msg)
+    override fun d() = logWriter.write(DEFAULT_TAG, "", LogxType.DEBUG)
+    override fun d(msg: Any?) = logWriter.write(DEFAULT_TAG, msg, LogxType.DEBUG)
+    override fun d(tag: String, msg: Any?) = logWriter.write(tag, msg, LogxType.DEBUG)
+    fun d1(msg: Any?) = logWriter.writeExtensions(DEFAULT_TAG, msg, LogxType.DEBUG)
+    fun d1(tag: String, msg: Any?) = logWriter.writeExtensions(tag, msg, LogxType.DEBUG)
 
-    override inline fun d() = log(LogxType.DEBUG)
-    override inline fun d(msg: Any?) = log(LogxType.DEBUG, msg = msg)
-    override inline fun d(tag: String, msg: Any?) = log(LogxType.DEBUG, tag, msg)
-    inline fun d1(msg: Any?) = logExt(LogxType.DEBUG, msg = msg)
-    inline fun d1(tag: String, msg: Any?) = logExt(LogxType.DEBUG, tag, msg)
+    override fun i() = logWriter.write(DEFAULT_TAG, "", LogxType.INFO)
+    override fun i(msg: Any?) = logWriter.write(DEFAULT_TAG, msg, LogxType.INFO)
+    override fun i(tag: String, msg: Any?) = logWriter.write(tag, msg, LogxType.INFO)
+    fun i1(msg: Any?) = logWriter.writeExtensions(DEFAULT_TAG, msg, LogxType.INFO)
+    fun i1(tag: String, msg: Any?) = logWriter.writeExtensions(tag, msg, LogxType.INFO)
 
-    override inline fun i() = log(LogxType.INFO)
-    override inline fun i(msg: Any?) = log(LogxType.INFO, msg = msg)
-    override inline fun i(tag: String, msg: Any?) = log(LogxType.INFO, tag, msg)
-    inline fun i1(msg: Any?) = logExt(LogxType.INFO, msg = msg)
-    inline fun i1(tag: String, msg: Any?) = logExt(LogxType.INFO, tag, msg)
+    override fun w() = logWriter.write(DEFAULT_TAG, "", LogxType.WARN)
+    override fun w(msg: Any?) = logWriter.write(DEFAULT_TAG, msg, LogxType.WARN)
+    override fun w(tag: String, msg: Any?) = logWriter.write(tag, msg, LogxType.WARN)
+    fun w1(msg: Any?) = logWriter.writeExtensions(DEFAULT_TAG, msg, LogxType.WARN)
+    fun w1(tag: String, msg: Any?) = logWriter.writeExtensions(tag, msg, LogxType.WARN)
 
-    override inline fun w() = log(LogxType.WARN)
-    override inline fun w(msg: Any?) = log(LogxType.WARN, msg = msg)
-    override inline fun w(tag: String, msg: Any?) = log(LogxType.WARN, tag, msg)
-    inline fun w1(msg: Any?) = logExt(LogxType.WARN, msg = msg)
-    inline fun w1(tag: String, msg: Any?) = logExt(LogxType.WARN, tag, msg)
+    override fun e() = logWriter.write(DEFAULT_TAG, "", LogxType.ERROR)
+    override fun e(msg: Any?) = logWriter.write(DEFAULT_TAG, msg, LogxType.ERROR)
+    override fun e(tag: String, msg: Any?) = logWriter.write(tag, msg, LogxType.ERROR)
+    fun e1(msg: Any?) = logWriter.writeExtensions(DEFAULT_TAG, msg, LogxType.ERROR)
+    fun e1(tag: String, msg: Any?) = logWriter.writeExtensions(tag, msg, LogxType.ERROR)
 
-    override inline fun e() = log(LogxType.ERROR)
-    override inline fun e(msg: Any?) = log(LogxType.ERROR, msg = msg)
-    override inline fun e(tag: String, msg: Any?) = log(LogxType.ERROR, tag, msg)
-    inline fun e1(msg: Any?) = logExt(LogxType.ERROR, msg = msg)
-    inline fun e1(tag: String, msg: Any?) = logExt(LogxType.ERROR, tag, msg)
+    // 확장 기능들
+    override fun p() = logWriter.writeParent(DEFAULT_TAG, "")
+    override fun p(msg: Any?) = logWriter.writeParent(DEFAULT_TAG, msg)
+    override fun p(tag: String, msg: Any?) = logWriter.writeParent(tag, msg)
+    fun p1(msg: Any?) = logWriter.writeExtensionsParent(DEFAULT_TAG, msg)
+    fun p1(tag: String, msg: Any?) = logWriter.writeExtensionsParent(tag, msg)
 
-    // 확장 기능들 - 간소화 및 인라인 최적화
-    @JvmOverloads
-    inline fun logParent(tag: String = DEFAULT_TAG, msg: Any? = "") =
-        logWriter.writeParent(tag, msg)
-    
-    @JvmOverloads  
-    inline fun logParentExt(tag: String = DEFAULT_TAG, msg: Any? = "") =
-        logWriter.writeExtensionsParent(tag, msg)
-    
-    @JvmOverloads
-    inline fun logThread(tag: String = DEFAULT_TAG, msg: Any? = "") =
-        logWriter.writeThreadId(tag, msg)
-        
-    @JvmOverloads
-    inline fun logJson(tag: String = DEFAULT_TAG, msg: String) =
-        logWriter.writeJson(tag, msg)
-        
-    @JvmOverloads
-    inline fun logJsonExt(tag: String = DEFAULT_TAG, msg: String) =
-        logWriter.writeJsonExtensions(tag, msg)
+    override fun t() = logWriter.writeThreadId(DEFAULT_TAG, "")
+    override fun t(msg: Any?) = logWriter.writeThreadId(DEFAULT_TAG, msg)
+    override fun t(tag: String, msg: Any?) = logWriter.writeThreadId(tag, msg)
 
-    // 기존 API 호환성 유지
-    override inline fun p() = logParent()
-    override inline fun p(msg: Any?) = logParent(msg = msg)
-    override inline fun p(tag: String, msg: Any?) = logParent(tag, msg)
-    inline fun p1(msg: Any?) = logParentExt(msg = msg)
-    inline fun p1(tag: String, msg: Any?) = logParentExt(tag, msg)
-
-    override inline fun t() = logThread()
-    override inline fun t(msg: Any?) = logThread(msg = msg)
-    override inline fun t(tag: String, msg: Any?) = logThread(tag, msg)
-
-    override inline fun j(msg: String) = logJson(msg = msg)
-    override inline fun j(tag: String, msg: String) = logJson(tag, msg)
-    inline fun j1(msg: String) = logJsonExt(msg = msg)
-    inline fun j1(tag: String, msg: String) = logJsonExt(tag, msg)
+    override fun j(msg: String) = logWriter.writeJson(DEFAULT_TAG, msg)
+    override fun j(tag: String, msg: String) = logWriter.writeJson(tag, msg)
+    fun j1(msg: String) = logWriter.writeJsonExtensions(DEFAULT_TAG, msg)
+    fun j1(tag: String, msg: String) = logWriter.writeJsonExtensions(tag, msg)
 
     // 레거시 호환성을 위한 getter 메서드들
     fun getDebugMode(): Boolean = configManager.config.isDebug

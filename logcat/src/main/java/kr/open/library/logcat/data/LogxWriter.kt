@@ -18,7 +18,7 @@ import kr.open.library.logcat.writer.LogFileWriterFactory
  * - 파일 저장: LogFileWriter가 담당
  * - 성능 최적화: lazy 초기화 및 캐싱 적용
  */
-internal class LogxWriter(private var config: LogxConfig) {
+class LogxWriter(private var config: LogxConfig) {
 
     private val stackTrace by lazy { LogxStackTrace() }
     
