@@ -1,0 +1,28 @@
+package kr.open.library.logcat.formatter
+
+import kr.open.library.logcat.vo.LogxType
+
+/**
+ * 로그 포맷팅을 담당하는 인터페이스
+ * OCP 원칙을 준수하여 새로운 포맷터를 쉽게 추가할 수 있도록 함
+ */
+interface LogFormatter {
+    /**
+     * 로그 메시지를 포맷팅
+     * @param tag 로그 태그
+     * @param message 로그 메시지
+     * @param logType 로그 타입
+     * @param stackInfo 스택 정보 (옵션)
+     * @return 포맷팅된 로그 메시지, null이면 필터링됨
+     */
+    fun format(tag: String, message: Any?, logType: LogxType, stackInfo: String = ""): FormattedLog?
+}
+
+/**
+ * 포맷팅된 로그 데이터
+ */
+data class FormattedLog(
+    val tag: String,
+    val message: String,
+    val logType: LogxType
+)

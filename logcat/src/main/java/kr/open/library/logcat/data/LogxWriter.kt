@@ -3,201 +3,242 @@ package kr.open.library.logcat.data
 import android.util.Log
 import kr.open.library.logcat.config.LogxConfig
 import kr.open.library.logcat.domain.LogxStackTrace
+import kr.open.library.logcat.filter.DefaultLogFilter
+import kr.open.library.logcat.filter.LogFilter
+import kr.open.library.logcat.formatter.*
 import kr.open.library.logcat.vo.LogxType
+import kr.open.library.logcat.writer.LogFileWriter
+import kr.open.library.logcat.writer.LogFileWriterFactory
 
+/**
+ * 리팩토링된 LogxWriter
+ * SRP 원칙을 준수하여 각 책임을 별도의 클래스로 분리
+ * - 포맷팅: LogFormatter 구현체들이 담당
+ * - 필터링: LogFilter가 담당
+ * - 파일 저장: LogFileWriter가 담당
+ */
 internal class LogxWriter(private var config: LogxConfig) {
 
-    private val logxStackTrace = LogxStackTrace()
-    private val logSaver: LogxFileManager by lazy { LogxFileManager(config.saveFilePath) }
+    private val stackTrace = LogxStackTrace()
+    private var logFilter: LogFilter = DefaultLogFilter(config)
+    private var fileWriter: LogFileWriter = LogFileWriterFactory.create(config)
+    
+    // 포맷터들
+    private var defaultFormatter: DefaultLogFormatter = DefaultLogFormatter(config)
+    private var jsonFormatter: JsonLogFormatter = JsonLogFormatter(config)
+    private var threadIdFormatter: ThreadIdLogFormatter = ThreadIdLogFormatter(config)
+    private var parentFormatter: ParentLogFormatter = ParentLogFormatter(config, stackTrace, false)
+    private var parentExtensionsFormatter: ParentLogFormatter = ParentLogFormatter(config, stackTrace, true)
 
-    fun updateConfig(newConfig: LogxConfig) { config = newConfig }
+    /**
+     * 설정 업데이트 시 모든 의존성 재생성
+     */
+    fun updateConfig(newConfig: LogxConfig) {
+        config = newConfig
+        logFilter = DefaultLogFilter(config)
+        fileWriter.cleanup()
+        fileWriter = LogFileWriterFactory.create(config)
+        
+        // 포맷터들 재생성
+        defaultFormatter = DefaultLogFormatter(config)
+        jsonFormatter = JsonLogFormatter(config)
+        threadIdFormatter = ThreadIdLogFormatter(config)
+        parentFormatter = ParentLogFormatter(config, stackTrace, false)
+        parentExtensionsFormatter = ParentLogFormatter(config, stackTrace, true)
+    }
 
+    /**
+     * 기본 로그 작성 (Extension 함수용)
+     */
     fun writeExtensions(tag: String, msg: Any?, type: LogxType) {
-        if (!isDebug(type)) { return }
-        try { log(filterExtensionsType(tag, type), msg, type) } catch (e: Exception) {
+        if (!shouldLog(type)) return
+        
+        try {
+            val stackInfo = getExtensionsStackInfo(tag) ?: return
+            writeLogWithFormatter(tag, msg, type, stackInfo, defaultFormatter)
+        } catch (e: Exception) {
             Log.e("LogxWriter", "Failed to write extensions log: ${e.message}", e)
         }
     }
 
+    /**
+     * 기본 로그 작성
+     */
     fun write(tag: String, msg: Any?, type: LogxType) {
-        if (!isDebug(type)) { return }
-        try { log(filter(tag, type), msg, type) } catch (e: Exception) {
+        if (!shouldLog(type)) return
+        
+        try {
+            val stackInfo = getNormalStackInfo(tag) ?: return
+            writeLogWithFormatter(tag, msg, type, stackInfo, defaultFormatter)
+        } catch (e: Exception) {
             Log.e("LogxWriter", "Failed to write log: ${e.message}", e)
         }
     }
 
+    /**
+     * 스레드 ID 포함 로그 작성
+     */
     fun writeThreadId(tag: String, msg: Any?) {
-        val type = LogxType.THREAD_ID
-        if (!isDebug(type)) { return }
-        try { log(threadIdType(filter(tag, type)), msg, type) } catch (e: Exception) {
+        if (!shouldLog(LogxType.THREAD_ID)) return
+        
+        try {
+            val stackInfo = getNormalStackInfo(tag) ?: return
+            writeLogWithFormatter(tag, msg, LogxType.THREAD_ID, stackInfo, threadIdFormatter)
+        } catch (e: Exception) {
             Log.e("LogxWriter", "Failed to write thread ID log: ${e.message}", e)
         }
     }
 
-    private fun threadIdType(pair: Pair<String, String?>?): Pair<String, String?>? =
-        if (pair == null)  null
-        else Pair(pair.first,"[${Thread.currentThread().id}]${pair.second}")
-
+    /**
+     * 부모 메서드 정보 포함 로그 작성
+     */
     fun writeParent(tag: String, msg: Any?) {
-        val type = LogxType.PARENT
-        if (!isDebug(type)) { return }
-        try {log(parentType(filter(tag, type)), msg, type)} catch (e: Exception) {
+        if (!shouldLog(LogxType.PARENT)) return
+        
+        try {
+            val stackInfo = getNormalStackInfo(tag) ?: return
+            writeParentLog(tag, msg, stackInfo, parentFormatter)
+        } catch (e: Exception) {
             Log.e("LogxWriter", "Failed to write parent log: ${e.message}", e)
         }
     }
 
+    /**
+     * 부모 메서드 정보 포함 로그 작성 (Extension용)
+     */
     fun writeExtensionsParent(tag: String, msg: Any?) {
-        val type = LogxType.PARENT
-        if (!isDebug(type)) { return }
-        try {log(parentExtensionsType(filterExtensionsType(tag, type)), msg, type)} catch (e: Exception) {
+        if (!shouldLog(LogxType.PARENT)) return
+        
+        try {
+            val stackInfo = getExtensionsStackInfo(tag) ?: return
+            writeParentLog(tag, msg, stackInfo, parentExtensionsFormatter)
+        } catch (e: Exception) {
             Log.e("LogxWriter", "Failed to write extensions parent log: ${e.message}", e)
         }
     }
 
-    private fun parentType(pair: Pair<String, String?>?): Pair<String, String?>? = logxStackTrace.getParentStackTrace().let {
-        if (pair == null) return null
-        log(Pair(pair.first,"┎${it.getMsgFrontParent()}"), "", LogxType.PARENT)
-        return Pair(pair.first, "┖${pair.second}")
-    }
-
-    private fun parentExtensionsType(pair: Pair<String, String?>?): Pair<String, String?>? = logxStackTrace.getParentExtensionsStackTrace().let {
-        if (pair == null) return null
-        log(Pair(pair.first,"┎${it.getMsgFrontParent()}"), "", LogxType.PARENT)
-        return Pair(pair.first, "┖${pair.second}")
-    }
-
+    /**
+     * JSON 로그 작성 (Extension용)
+     */
     fun writeJsonExtensions(tag: String, msg: String) {
-        if (!isDebug(LogxType.JSON)) { return }
+        if (!shouldLog(LogxType.JSON)) return
+        
         try {
-            filterExtensionsType(tag, LogxType.JSON)?.let {
-                val jsonTag = jsonType(it)
-                log(jsonTag, "=========JSON_START========", LogxType.JSON)
-                jsonMsgSort(it.first, "${msg}")
-                log(jsonTag, "=========JSON_END==========", LogxType.JSON)
-            }
+            val stackInfo = getExtensionsStackInfo(tag) ?: return
+            writeJsonLog(tag, msg, jsonFormatter)
         } catch (e: Exception) {
             Log.e("LogxWriter", "Failed to write JSON extensions log: ${e.message}", e)
         }
     }
 
+    /**
+     * JSON 로그 작성
+     */
     fun writeJson(tag: String, msg: String) {
-        if (!isDebug(LogxType.JSON)) { return }
+        if (!shouldLog(LogxType.JSON)) return
+        
         try {
-            filter(tag, LogxType.JSON)?.let {
-                val jsonTag = jsonType(it)
-                log(jsonTag, "=========JSON_START========", LogxType.JSON)
-                jsonMsgSort(it.first, msg)
-                log(jsonTag, "=========JSON_END==========", LogxType.JSON)
-            }
+            val stackInfo = getNormalStackInfo(tag) ?: return
+            writeJsonLog(tag, msg, jsonFormatter)
         } catch (e: Exception) {
             Log.e("LogxWriter", "Failed to write JSON log: ${e.message}", e)
         }
     }
 
-    private fun jsonType(pair: Pair<String, String?>): Pair<String, String?> =
-        Pair(pair.first, "${pair.second}")
+    private fun writeLogWithFormatter(
+        tag: String, 
+        msg: Any?, 
+        type: LogxType, 
+        stackInfo: String, 
+        formatter: LogFormatter
+    ) {
+        val formatted = formatter.format(tag, msg, type, stackInfo) ?: return
+        outputLog(formatted)
+        saveToFile(formatted)
+    }
 
-    private fun log(pair: Pair<String, String?>?, msg: Any?, logType: LogxType) {
-
-        if(pair == null) {  return  }
-        val logTag = pair.first
-        val logMsg = "${pair.second}$msg"
-        when (logType) {
-            LogxType.VERBOSE ->     Log.v(logTag, logMsg)
-            LogxType.INFO ->        Log.i(logTag, logMsg)
-            LogxType.JSON ->        Log.i(logTag, logMsg)
-            LogxType.DEBUG ->       Log.d(logTag, logMsg)
-            LogxType.THREAD_ID ->   Log.d(logTag, logMsg)
-            LogxType.PARENT ->      Log.d(logTag, logMsg)
-            LogxType.WARN ->        Log.w(logTag, logMsg)
-            LogxType.ERROR ->       Log.e(logTag, logMsg)
+    private fun writeParentLog(tag: String, msg: Any?, stackInfo: String, formatter: ParentLogFormatter) {
+        // 부모 정보를 먼저 출력
+        formatter.formatParentInfo(tag)?.let { parentInfo ->
+            outputLog(parentInfo)
+            saveToFile(parentInfo)
         }
-
-        if (config.isDebugSave) { logSaver.addWriteLog(logType, logTag, logMsg) }
+        
+        // 실제 메시지 출력
+        formatter.format(tag, msg, LogxType.PARENT, stackInfo)?.let { mainLog ->
+            outputLog(mainLog)
+            saveToFile(mainLog)
+        }
     }
 
-
-    private fun getTypeToString(typeRes:LogxType) :String = when(typeRes) {
-        LogxType.THREAD_ID -> " [T_ID] :"
-        LogxType.PARENT -> " [PARENT] :"
-        LogxType.JSON -> " [JSON] :"
-        else -> " :"
+    private fun writeJsonLog(tag: String, msg: String, formatter: JsonLogFormatter) {
+        // JSON 시작 마커
+        val startMarker = formatter.format(tag, "=========JSON_START========", LogxType.JSON) ?: return
+        outputLog(startMarker)
+        saveToFile(startMarker)
+        
+        // JSON 내용
+        val jsonContent = formatter.format(tag, msg, LogxType.JSON) ?: return
+        outputLog(jsonContent)
+        saveToFile(jsonContent)
+        
+        // JSON 종료 마커
+        val endMarker = formatter.format(tag, "=========JSON_END==========", LogxType.JSON) ?: return
+        outputLog(endMarker)
+        saveToFile(endMarker)
     }
 
-    private fun filterExtensionsType(tag:String, type: LogxType):Pair<String,String>? = logxStackTrace.getExtensionsStackTrace().let {
+    private fun outputLog(formattedLog: FormattedLog) {
+        when (formattedLog.logType) {
+            LogxType.VERBOSE -> Log.v(formattedLog.tag, formattedLog.message)
+            LogxType.INFO -> Log.i(formattedLog.tag, formattedLog.message)
+            LogxType.JSON -> Log.i(formattedLog.tag, formattedLog.message)
+            LogxType.DEBUG -> Log.d(formattedLog.tag, formattedLog.message)
+            LogxType.THREAD_ID -> Log.d(formattedLog.tag, formattedLog.message)
+            LogxType.PARENT -> Log.d(formattedLog.tag, formattedLog.message)
+            LogxType.WARN -> Log.w(formattedLog.tag, formattedLog.message)
+            LogxType.ERROR -> Log.e(formattedLog.tag, formattedLog.message)
+        }
+    }
 
-        if(!isLogFilter(tag, it.fileName.split(".")[0])) return null
-        return Pair("${config.appName} [$tag]${getTypeToString(type)}", it.getMsgFrontNormal())
+    private fun saveToFile(formattedLog: FormattedLog) {
+        try {
+            fileWriter.writeLog(formattedLog.logType, formattedLog.tag, formattedLog.message)
+        } catch (e: Exception) {
+            Log.e("LogxWriter", "Failed to save log to file: ${e.message}", e)
+        }
+    }
+
+    private fun getNormalStackInfo(tag: String): String? {
+        val stackInfo = stackTrace.getStackTrace()
+        val fileName = stackInfo.fileName.split(".")[0]
+        
+        return if (logFilter.shouldLog(tag, fileName)) {
+            stackInfo.getMsgFrontNormal()
+        } else {
+            null
+        }
+    }
+
+    private fun getExtensionsStackInfo(tag: String): String? {
+        val stackInfo = stackTrace.getExtensionsStackTrace()
+        val fileName = stackInfo.fileName.split(".")[0]
+        
+        return if (logFilter.shouldLog(tag, fileName)) {
+            stackInfo.getMsgFrontNormal()
+        } else {
+            null
+        }
+    }
+
+    private fun shouldLog(logType: LogxType): Boolean {
+        return config.isDebug && config.debugLogTypeList.contains(logType)
     }
 
     /**
-     * stackTrace ex)
-     * it.className -> include Package (ex a.b.c.MainActivity)
-     * it.fileName -> MainActivity.kt
-     * return ex) TAG : RhPark [tag] : , (MainActivity.kt:50).onCreate
+     * 리소스 정리
      */
-    private fun filter(tag:String, type: LogxType):Pair<String,String>? = logxStackTrace.getStackTrace().let {
-
-        if(!isLogFilter(tag, it.fileName.split(".")[0])) return null
-        return Pair("${config.appName} [$tag]${getTypeToString(type)}", it.getMsgFrontNormal())
-    }
-
-    private fun jsonMsgSort(tag:String, msg: String) {
-
-        val result = StringBuilder()
-        var indentLevel = 0
-        var inQuotes = false
-
-        for (char in msg) {
-            when (char) {
-                '{', '[' -> {
-                    result.append(char)
-                    if (!inQuotes) {
-                        result.append("\n")
-                        indentLevel++
-                        result.append("  ".repeat(indentLevel))
-                    }
-                }
-                '}', ']' -> {
-                    if (!inQuotes) {
-                        result.append("\n")
-                        indentLevel = maxOf(0, indentLevel - 1)
-                        result.append("  ".repeat(indentLevel))
-                    }
-                    result.append(char)
-                }
-                ',' -> {
-                    result.append(char)
-                    if (!inQuotes) {
-                        result.append("\n")
-                        result.append("  ".repeat(indentLevel))
-                    }
-                }
-                '"' -> {
-                    result.append(char)
-                    if (result.lastOrNull() != '\\') {
-                        inQuotes = !inQuotes // 따옴표 안인지 여부를 반전
-                    }
-                }
-                else -> result.append(char)
-            }
-        }
-        log(Pair(tag, ""), result, LogxType.JSON)
-    }
-
-    private fun isDebug(logType: LogxType) = if (!config.isDebug) false
-    else config.debugLogTypeList.contains(logType)
-
-    private fun isDebugFilter(logTag: String) = if (!config.isDebugFilter) true
-    else config.debugFilterList.contains(logTag)
-
-    private fun isLogFilter(tag: String, fileName: String): Boolean  {
-        return if(config.isDebugFilter == false) {
-            true
-        } else if(isDebugFilter(tag) || isDebugFilter(fileName)) {
-            true
-        } else {
-            false
-        }
+    fun cleanup() {
+        fileWriter.cleanup()
     }
 }
