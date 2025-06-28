@@ -5,14 +5,14 @@ import kr.open.library.logcat.Logx
 
 class LogxStackTrace {
 
-    private val LOG_EXTENTIONS_PARENT_STACK_LEVEL = 11
+    private val LOG_EXTENSIONS_PARENT_STACK_LEVEL = 11
     private val LOG_PARENT_STACK_LEVEL = 10
-    private val LOG_EXTEPTIONS_STACK_LEVEL = 8
+    private val LOG_EXTENSIONS_STACK_LEVEL = 8
     private val LOG_NORMAL_STACK_LEVEL = 7
 
     fun getParentStackTrace() = getStackTrace(LOG_PARENT_STACK_LEVEL)
-    fun getParentExtensionsStackTrace() = getStackTrace(LOG_EXTENTIONS_PARENT_STACK_LEVEL)
-    fun getExtensionsStackTrace() = getStackTrace(LOG_EXTEPTIONS_STACK_LEVEL)
+    fun getParentExtensionsStackTrace() = getStackTrace(LOG_EXTENSIONS_PARENT_STACK_LEVEL)
+    fun getExtensionsStackTrace() = getStackTrace(LOG_EXTENSIONS_STACK_LEVEL)
     fun getStackTrace() = getStackTrace(LOG_NORMAL_STACK_LEVEL)
 
     private fun getStackTrace(level: Int): LogxStackTraceMetaData {
@@ -20,8 +20,8 @@ class LogxStackTrace {
         val stackTraceSize = Thread.currentThread().stackTrace.size
 
         if(level >= stackTraceSize) {
-            Log.e(Logx.getAppName(), "[Error] Logx, IndexOutOfBoundsException!! MinState $level stackTraceSize $stackTraceSize!!")
-            throw IndexOutOfBoundsException("MinState $level stackTraceSize $stackTraceSize!!")
+            Log.e(Logx.getAppName(), "[Error] Logx: Stack trace level $level exceeds available stack size $stackTraceSize")
+            throw IndexOutOfBoundsException("Stack trace level $level exceeds available stack size $stackTraceSize")
         }
 
         var isCoroutine = false
@@ -49,7 +49,7 @@ class LogxStackTrace {
 
         val defaultItem = Thread.currentThread().stackTrace[level]
 
-        Log.w(Logx.getAppName(), "[Warning] Logx, Can not find class !!!, " + defaultItem.className + ", " + defaultItem.methodName)
+        Log.w(Logx.getAppName(), "[Warning] Logx: Could not find appropriate class, using fallback: ${defaultItem.className}.${defaultItem.methodName}")
 
         return LogxStackTraceMetaData(defaultItem)
     }

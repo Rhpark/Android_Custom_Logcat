@@ -4,6 +4,19 @@ import android.os.Environment
 import kr.open.library.logcat.vo.LogxType
 
 /**
+ * API 레벨에 따른 안전한 기본 로그 경로 제공
+ */
+private fun getDefaultLogPath(): String {
+    return try {
+        @Suppress("DEPRECATION")
+        Environment.getExternalStorageDirectory().path
+    } catch (e: Exception) {
+        // Fallback to internal storage
+        "/data/data/logs"
+    }
+}
+
+/**
  * Kotlin DSL for Logx Configuration
  * 더 직관적이고 타입 안전한 설정 방법 제공
  * 
@@ -35,15 +48,15 @@ annotation class LogxConfigDsl
 /**
  * DSL 진입점
  */
-fun logxConfig(block: LogxConfigBuilder.() -> Unit): LogxConfig {
-    return LogxConfigBuilder().apply(block).build()
+fun logxConfig(block: LogxDslBuilder.() -> Unit): LogxConfig {
+    return LogxDslBuilder().apply(block).build()
 }
 
 /**
  * 향상된 설정 빌더 (DSL 지원)
  */
 @LogxConfigDsl
-class LogxConfigBuilder {
+class LogxDslBuilder {
     var debugMode: Boolean = true
     var debugFilter: Boolean = false
     var appName: String = "RhPark"
@@ -96,7 +109,7 @@ class LogxConfigBuilder {
 @LogxConfigDsl
 class FileConfigBuilder {
     var saveToFile: Boolean = false
-    var filePath: String = Environment.getExternalStorageDirectory().path
+    var filePath: String = getDefaultLogPath()
 }
 
 /**
@@ -226,7 +239,7 @@ fun productionConfig(appName: String = "RhPark"): LogxConfig = logxConfig {
  */
 fun fileLoggingConfig(
     appName: String = "RhPark",
-    filePath: String = Environment.getExternalStorageDirectory().path
+    filePath: String = getDefaultLogPath()
 ): LogxConfig = logxConfig {
     debugMode = true
     this.appName = appName

@@ -91,7 +91,7 @@ object Logx : ILogx {
      * }
      * ```
      */
-    fun configure(block: kr.open.library.logcat.config.LogxConfigBuilder.() -> Unit) {
+    fun configure(block: kr.open.library.logcat.config.LogxDslBuilder.() -> Unit) {
         val newConfig = kr.open.library.logcat.config.logxConfig(block)
         updateConfig(newConfig)
     }

@@ -11,7 +11,7 @@ data class LogxConfig(
     val isDebug: Boolean = true,
     val isDebugFilter: Boolean = false,
     val isDebugSave: Boolean = false,
-    val saveFilePath: String = Environment.getExternalStorageDirectory().path,
+    val saveFilePath: String = getDefaultLogPath(),
     val appName: String = "RhPark",
     val debugFilterList: Set<String> = emptySet(),
     val debugLogTypeList: List<LogxType> = listOf(
@@ -27,6 +27,19 @@ data class LogxConfig(
 ) {
     companion object {
         fun builder() = LogxConfigBuilder()
+        
+        /**
+         * API 레벨에 따른 안전한 기본 로그 경로 제공
+         */
+        private fun getDefaultLogPath(): String {
+            return try {
+                @Suppress("DEPRECATION")
+                Environment.getExternalStorageDirectory().path
+            } catch (e: Exception) {
+                // Fallback to internal storage
+                "/data/data/logs"
+            }
+        }
     }
 }
 
@@ -38,7 +51,7 @@ class LogxConfigBuilder {
     private var isDebug: Boolean = true
     private var isDebugFilter: Boolean = false
     private var isDebugSave: Boolean = false
-    private var saveFilePath: String = Environment.getExternalStorageDirectory().path
+    private var saveFilePath: String = getDefaultLogPath()
     private var appName: String = "RhPark"
     private var debugFilterList: Set<String> = emptySet()
     private var debugLogTypeList: List<LogxType> = listOf(
