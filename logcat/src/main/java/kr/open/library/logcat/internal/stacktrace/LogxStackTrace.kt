@@ -22,7 +22,8 @@ class LogxStackTrace {
 
     private fun getStackTrace(level: Int): LogxStackTraceMetaData {
 
-        val stackTraceSize = Thread.currentThread().stackTrace.size
+        val currentThread = Thread.currentThread()
+        val stackTraceSize = currentThread.stackTrace.size
 
         if(level >= stackTraceSize) {
             Log.e(Logx.getAppName(), "[Error] Logx: Stack trace level $level exceeds available stack size $stackTraceSize")
@@ -33,8 +34,8 @@ class LogxStackTrace {
 
         for (i in level until stackTraceSize) {
 
-//            Log.d("Test", "isNormalMethod index $i, class Name ${Thread.currentThread().stackTrace[i].className}, ${Thread.currentThread().stackTrace[i].fileName}, ${Thread.currentThread().stackTrace[i].methodName}, ${Thread.currentThread().stackTrace[i].lineNumber}")
-            val item = Thread.currentThread().stackTrace[i]
+//            Log.d("Test", "isNormalMethod index $i, class Name ${currentThread.stackTrace[i].className}, ${currentThread.stackTrace[i].fileName}, ${currentThread.stackTrace[i].methodName}, ${currentThread.stackTrace[i].lineNumber}")
+            val item = currentThread.stackTrace[i]
             if (!isNormalMethod(item)) {
 //                Log.d("Test","continue isNormalMethod index $i, class Name ${item.className}, ${item.fileName}, ${item.methodName}, ${item.lineNumber}")
                 continue
@@ -52,7 +53,7 @@ class LogxStackTrace {
             }
         }
 
-        val defaultItem = Thread.currentThread().stackTrace[level]
+        val defaultItem = currentThread.stackTrace[level]
 
         Log.w(Logx.getAppName(), "[Warning] Logx: Could not find appropriate class, using fallback: ${defaultItem.className}.${defaultItem.methodName}")
 

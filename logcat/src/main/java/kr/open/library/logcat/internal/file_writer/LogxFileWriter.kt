@@ -1,6 +1,11 @@
 package kr.open.library.logcat.internal.file_writer
 
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kr.open.library.logcat.moel.LogxType
 import kr.open.library.logcat.internal.file_writer.base.LogxFileWriterImp
 import java.io.BufferedWriter
@@ -22,7 +27,9 @@ class LogxFileWriter(private val filePath: String) : LogxFileWriterImp {
     private val dateFormatter = SimpleDateFormat("yy-MM-dd, HH:mm:ss.SSS", Locale.US)
     private val fileNameFormatter = SimpleDateFormat("yy-MM-dd", Locale.US)
 
-
+    private companion object {
+        private val logWriterScope = CoroutineScope(Dispatchers.IO + Job()) // Singleton
+    }
     /**
      * 로그 파일 작성 시 발생할 수 있는 예외
      */
@@ -30,6 +37,7 @@ class LogxFileWriter(private val filePath: String) : LogxFileWriterImp {
 
     init {
         createDirectoryIfNeeded()
+        finishCheck()
     }
     
     override fun writeLog(logType: LogxType, tag: String, message: String) {
@@ -94,15 +102,38 @@ class LogxFileWriter(private val filePath: String) : LogxFileWriterImp {
     }
     
     private fun writeToFile(file: File, logLine: String) {
-        try {
-            BufferedWriter(FileWriter(file, true)).use { writer ->
-                writer.write(logLine)
-                writer.newLine()
-                writer.flush() // 즉시 플러시하여 데이터 손실 방지
+        logWriterScope.launch {
+            try {
+                BufferedWriter(FileWriter(file, true)).use { writer ->
+                    writer.write(logLine)
+                    writer.newLine()
+                    writer.flush() // 즉시 플러시하여 데이터 손실 방지
+                }
+            } catch (e: IOException) {
+                Log.e("ImmediateLogFileWriter", "Failed to write to file: ${file.path}", e)
+                throw LogFileWriteException("Failed to write to file: ${file.path}", e)
             }
-        } catch (e: IOException) {
-            Log.e("ImmediateLogFileWriter", "Failed to write to file: ${file.path}", e)
-            throw LogFileWriteException("Failed to write to file: ${file.path}", e)
+        }
+    }
+
+    private fun finishCheck() {
+        // 앱 종료 시 로그 저장
+        Runtime.getRuntime().addShutdownHook(Thread {
+            shutdownLogger()
+        })
+
+        // 크래시 발생 시 로그 저장
+        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
+            shutdownLogger()
+            throwable.printStackTrace()
+        }
+    }
+
+    private fun shutdownLogger() {
+        try {
+            logWriterScope.cancel() // 모든 코루틴 작업 취소
+        } catch (e: Exception) {
+            Log.e("ImmediateLogFileWriter", "[Error] Error during logger shutdown: ${e.message}", e)
         }
     }
 }
