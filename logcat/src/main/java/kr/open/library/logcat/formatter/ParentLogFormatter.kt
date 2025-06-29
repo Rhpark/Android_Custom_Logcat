@@ -29,7 +29,7 @@ class ParentLogFormatter(
         if (!shouldFormat(LogxType.PARENT)) return null
         
         val parentInfo = getParentInfo()
-        val formattedTag = createFormattedTag(tag, LogxType.PARENT)
+        val formattedTag = createFormattedTag(tag)
         
         return LogxFormattedData(
             tag = formattedTag,

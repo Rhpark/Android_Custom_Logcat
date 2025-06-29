@@ -309,14 +309,8 @@ Logx (메인 API)
 ├── LogxConfig (설정 관리)
 ├── LogxWriter (로그 처리 & 파일 관리)
 ├── LogxStackTrace (스택 추적)
-```
+...
 
-### 데이터 플로우
-
-```
-사용자 호출 → Logx → LogxWriter → Android Log
-                 ↓
-           LogxFileManager → 파일 저장 (비동기)
 ```
 
 ## 🔄 마이그레이션 가이드
