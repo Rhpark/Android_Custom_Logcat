@@ -6,6 +6,7 @@ import kr.open.library.logcat.config.LogxDslBuilder
 import kr.open.library.logcat.config.logxConfig
 import kr.open.library.logcat.repo.data.LogxWriter
 import kr.open.library.logcat.repo.vo.LogxType
+import java.util.EnumSet
 
 /**
  * Logx 라이브러리의 메인 클래스 (리팩토링됨)
@@ -59,7 +60,7 @@ object Logx : ILogx {
         configManager.setAppName(name)
     }
 
-    override fun setDebugLogTypeList(types: List<LogxType>) {
+    override fun setDebugLogTypeList(types: EnumSet<LogxType>) {
         configManager.setDebugLogTypeList(types)
     }
 
@@ -133,7 +134,7 @@ object Logx : ILogx {
     fun getFilePath(): String = configManager.config.saveFilePath
     fun getAppName(): String = configManager.config.appName
     fun getDebugFilterList(): Set<String> = configManager.config.debugFilterList
-    fun getDebugLogTypeList(): List<LogxType> = configManager.config.debugLogTypeList
+    fun getDebugLogTypeList(): EnumSet<LogxType> = configManager.config.debugLogTypeList
 
     /**
      * 리소스 정리 (앱 종료 시 호출 권장)

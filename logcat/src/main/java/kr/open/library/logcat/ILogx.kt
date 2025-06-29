@@ -1,6 +1,7 @@
 package kr.open.library.logcat
 
 import kr.open.library.logcat.repo.vo.LogxType
+import java.util.EnumSet
 
 /**
  * Logx 라이브러리의 핵심 인터페이스
@@ -46,6 +47,7 @@ interface ILogx {
     fun setSaveToFile(isSave: Boolean)
     fun setFilePath(path: String)
     fun setAppName(name: String)
-    fun setDebugLogTypeList(types: List<LogxType>)
+//    fun setDebugLogTypeList(types: List<LogxType>)
+    fun setDebugLogTypeList(types: EnumSet<LogxType>)
     fun setDebugFilterList(tags: List<String>)
 }

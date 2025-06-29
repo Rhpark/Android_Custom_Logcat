@@ -1,6 +1,7 @@
 package kr.open.library.logcat.config
 
 import kr.open.library.logcat.repo.vo.LogxType
+import java.util.EnumSet
 
 
 /**
@@ -17,10 +18,10 @@ class LogxFileConfigBuilder {
  */
 @LogxConfigDsl
 class LogxTypeConfigBuilder {
-    private val _types = mutableSetOf<LogxType>()
+    private val _types = EnumSet.noneOf(LogxType::class.java)
 
-    val types: List<LogxType>
-        get() = _types.toList()
+    val types: EnumSet<LogxType>
+        get() = _types
 
     operator fun LogxType.unaryPlus() {
         _types.add(this)
@@ -31,7 +32,7 @@ class LogxTypeConfigBuilder {
     }
 
     fun all() {
-        _types.addAll(LogxType.values())
+        _types.addAll(LogxType.entries)
     }
 
     fun basic() {

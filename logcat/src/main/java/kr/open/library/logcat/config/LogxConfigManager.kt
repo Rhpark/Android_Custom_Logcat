@@ -1,6 +1,7 @@
 package kr.open.library.logcat.config
 
 import kr.open.library.logcat.repo.vo.LogxType
+import java.util.EnumSet
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -103,8 +104,8 @@ class LogxConfigManager(initialConfig: LogxConfig = LogxConfig()) {
     /**
      * 디버그 로그 타입 목록 설정
      */
-    fun setDebugLogTypeList(types: List<LogxType>) {
-        updateConfig(_config.copy(debugLogTypeList = types.toList()))
+    fun setDebugLogTypeList(types: EnumSet<LogxType>) {
+        updateConfig(_config.copy(debugLogTypeList = types))
     }
     
     /**

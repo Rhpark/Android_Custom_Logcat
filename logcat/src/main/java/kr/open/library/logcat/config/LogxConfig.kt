@@ -2,6 +2,7 @@ package kr.open.library.logcat.config
 
 import android.os.Environment
 import kr.open.library.logcat.repo.vo.LogxType
+import java.util.EnumSet
 
 /**
  * Logx 라이브러리의 설정을 관리하는 데이터 클래스
@@ -14,7 +15,7 @@ data class LogxConfig(
     val saveFilePath: String = getDefaultLogPath(),
     val appName: String = "RhPark",
     val debugFilterList: Set<String> = emptySet(),
-    val debugLogTypeList: List<LogxType> = LogxType.entries.toList()
+    val debugLogTypeList: EnumSet<LogxType> = EnumSet.allOf(LogxType::class.java)
 //    val debugLogTypeList: List<LogxType> = listOf(
 //        LogxType.VERBOSE,
 //        LogxType.DEBUG,
