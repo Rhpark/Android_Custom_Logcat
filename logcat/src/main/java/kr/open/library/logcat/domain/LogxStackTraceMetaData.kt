@@ -3,6 +3,14 @@ package kr.open.library.logcat.domain
 import android.util.Log
 import kr.open.library.logcat.Logx
 
+/**
+ *  LogxStackTrace의 metaData 클래스
+ *  출력 부분 중 현 위치 파악 정보를 전달
+ *  ex)
+ *  1. 일반 - fileName:lineNumber.methodName -
+ *  2. 부모 - fileName:lineNumber - [className.methodName]
+ *  3. JSON - fileName:lineNumber -
+ */
 data class LogxStackTraceMetaData(private val item: StackTraceElement) {
 
     // 파일 이름을 한 번만 계산하고 저장

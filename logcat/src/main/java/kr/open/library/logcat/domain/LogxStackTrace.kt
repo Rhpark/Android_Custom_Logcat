@@ -3,9 +3,14 @@ package kr.open.library.logcat.domain
 import android.util.Log
 import kr.open.library.logcat.Logx
 
+/**
+ * 특정 조건내에
+ * 현제 파일과 메소드의 위치와 라인 정보를 가져있는
+ * LogxStackTraceMetaData() 객체를 반환한다.
+ */
 class LogxStackTrace {
 
-    private val LOG_EXTENSIONS_PARENT_STACK_LEVEL = 10
+    private val LOG_EXTENSIONS_PARENT_STACK_LEVEL = 11
     private val LOG_PARENT_STACK_LEVEL = 10
     private val LOG_EXTENSIONS_STACK_LEVEL = 8
     private val LOG_NORMAL_STACK_LEVEL = 7

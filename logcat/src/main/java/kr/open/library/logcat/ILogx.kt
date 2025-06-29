@@ -1,6 +1,6 @@
 package kr.open.library.logcat
 
-import kr.open.library.logcat.vo.LogxType
+import kr.open.library.logcat.repo.vo.LogxType
 
 /**
  * Logx 라이브러리의 핵심 인터페이스

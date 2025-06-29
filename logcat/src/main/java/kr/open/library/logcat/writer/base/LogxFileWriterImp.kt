@@ -1,12 +1,12 @@
-package kr.open.library.logcat.writer
+package kr.open.library.logcat.writer.base
 
-import kr.open.library.logcat.vo.LogxType
+import kr.open.library.logcat.repo.vo.LogxType
 
 /**
  * 로그 파일 작성 전략을 위한 인터페이스
  * OCP 원칙을 준수하여 다양한 저장 전략을 구현할 수 있도록 함
  */
-interface LogFileWriter {
+interface LogxFileWriterImp {
     /**
      * 로그를 파일에 작성
      * @param logType 로그 타입
@@ -20,8 +20,3 @@ interface LogFileWriter {
      */
     fun cleanup()
 }
-
-/**
- * 로그 파일 작성 시 발생할 수 있는 예외
- */
-class LogFileWriteException(message: String, cause: Throwable? = null) : Exception(message, cause)

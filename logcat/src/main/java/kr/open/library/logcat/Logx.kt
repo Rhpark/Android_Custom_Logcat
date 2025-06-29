@@ -1,12 +1,11 @@
 package kr.open.library.logcat
 
 import kr.open.library.logcat.config.LogxConfig
-import kr.open.library.logcat.config.LogxConfigBuilder
 import kr.open.library.logcat.config.LogxConfigManager
 import kr.open.library.logcat.config.LogxDslBuilder
 import kr.open.library.logcat.config.logxConfig
-import kr.open.library.logcat.data.LogxWriter
-import kr.open.library.logcat.vo.LogxType
+import kr.open.library.logcat.repo.data.LogxWriter
+import kr.open.library.logcat.repo.vo.LogxType
 
 /**
  * Logx 라이브러리의 메인 클래스 (리팩토링됨)
@@ -74,33 +73,13 @@ object Logx : ILogx {
     fun updateConfig(newConfig: LogxConfig) {
         configManager.updateConfig(newConfig)
     }
-    
-    /**
-     * DSL을 사용한 설정 업데이트
-     * 
-     * Usage:
-     * ```
-     * Logx.configure {
-     *     debugMode = true
-     *     appName = "MyApp"
-     *     fileConfig {
-     *         saveToFile = true
-     *         filePath = "/custom/path"
-     *     }
-     *     logTypes {
-     *         +LogxType.DEBUG
-     *         +LogxType.ERROR
-     *     }
-     * }
-     * ```
-     */
-//    fun configure(block: LogxConfigBuilder.() -> Unit) {
+
     fun configure(block: LogxDslBuilder.() -> Unit) {
         val newConfig = logxConfig(block)
         updateConfig(newConfig)
     }
 
-    // 기본 로깅 메서드들 - 중복 제거 및 단순화
+
     override fun v() = logWriter.write(DEFAULT_TAG, "", LogxType.VERBOSE)
     override fun v(msg: Any?) = logWriter.write(DEFAULT_TAG, msg, LogxType.VERBOSE)
     override fun v(tag: String, msg: Any?) = logWriter.write(tag, msg, LogxType.VERBOSE)
@@ -161,5 +140,6 @@ object Logx : ILogx {
      */
     fun cleanup() {
         logWriter.cleanup()
+        configManager.removeAllConfigChangeListener()
     }
 }

@@ -1,34 +1,36 @@
-package kr.open.library.logcat.data
+package kr.open.library.logcat.repo.data
 
 import android.util.Log
 import kr.open.library.logcat.config.LogxConfig
 import kr.open.library.logcat.domain.LogxStackTrace
 import kr.open.library.logcat.filter.DefaultLogFilter
-import kr.open.library.logcat.filter.LogFilter
+import kr.open.library.logcat.filter.base.LogFilterImp
 import kr.open.library.logcat.formatter.*
-import kr.open.library.logcat.vo.LogxType
-import kr.open.library.logcat.writer.LogFileWriter
-import kr.open.library.logcat.writer.LogFileWriterFactory
+import kr.open.library.logcat.formatter.base.LogxFormattedData
+import kr.open.library.logcat.formatter.base.LogxFormatterImp
+import kr.open.library.logcat.repo.vo.LogxType
+import kr.open.library.logcat.writer.base.LogxFileWriterImp
+import kr.open.library.logcat.writer.LogxFileWriterFactory
 
 /**
- * 최적화된 LogxWriter
- * SRP 원칙을 준수하여 각 책임을 별도의 클래스로 분리
+ * @param LogxStackTraceMetaData.class 정보를 얻어와 처리
+ * Logcat 출력 & 파일 저장을 담당
  * - 포맷팅: LogFormatter 구현체들이 담당  
  * - 필터링: LogFilter가 담당
  * - 파일 저장: LogFileWriter가 담당
- * - 성능 최적화: lazy 초기화 및 캐싱 적용
+ * - 로그 출력 여부는 LogxConfig에 의해 결정됨
  */
 class LogxWriter(private var config: LogxConfig) {
 
     private val stackTrace by lazy { LogxStackTrace() }
     
-    // 스택 트레이스 캐싱 (성능 최적화)
+    // 스택 트레이스 캐싱
     private val stackInfoCache = mutableMapOf<String, String>()
     private var lastStackFrameHash = 0
     
     // 초기화
-    private var logFilter: LogFilter = DefaultLogFilter(config)
-    private var fileWriter: LogFileWriter = LogFileWriterFactory.create(config)
+    private var logFilter: LogFilterImp = DefaultLogFilter(config)
+    private var fileWriter: LogxFileWriterImp = LogxFileWriterFactory.create(config)
 
     // 포맷터들
     private var defaultFormatter = DefaultLogFormatter(config)
@@ -62,7 +64,7 @@ class LogxWriter(private var config: LogxConfig) {
         
         // 새 인스턴스 생성
         logFilter = DefaultLogFilter(config)
-        fileWriter = LogFileWriterFactory.create(config)
+        fileWriter = LogxFileWriterFactory.create(config)
         
         // 포맷터들 재생성
         defaultFormatter = DefaultLogFormatter(config)
@@ -170,12 +172,15 @@ class LogxWriter(private var config: LogxConfig) {
         }
     }
 
+    /**
+     * Logcat 출력 & 파일 저장
+     */
     private fun writeLogWithFormatter(
         tag: String,
         msg: Any?,
         type: LogxType,
         stackInfo: String,
-        formatter: LogFormatter
+        formatter: LogxFormatterImp
     ) {
         val formatted = formatter.format(tag, msg, type, stackInfo) ?: return
         outputLog(formatted)
@@ -213,20 +218,20 @@ class LogxWriter(private var config: LogxConfig) {
         saveToFile(endMarker)
     }
 
-    private fun outputLog(formattedLog: FormattedLog) {
+    private fun outputLog(formattedLog: LogxFormattedData) {
         when (formattedLog.logType) {
-            LogxType.VERBOSE -> Log.v(formattedLog.tag, formattedLog.message)
-            LogxType.INFO -> Log.i(formattedLog.tag, formattedLog.message)
-            LogxType.JSON -> Log.i(formattedLog.tag, formattedLog.message)
-            LogxType.DEBUG -> Log.d(formattedLog.tag, formattedLog.message)
-            LogxType.THREAD_ID -> Log.d(formattedLog.tag, formattedLog.message)
-            LogxType.PARENT -> Log.d(formattedLog.tag, formattedLog.message)
-            LogxType.WARN -> Log.w(formattedLog.tag, formattedLog.message)
-            LogxType.ERROR -> Log.e(formattedLog.tag, formattedLog.message)
+            LogxType.VERBOSE    -> Log.v(formattedLog.tag, formattedLog.message)
+            LogxType.INFO       -> Log.i(formattedLog.tag, formattedLog.message)
+            LogxType.JSON       -> Log.i(formattedLog.tag, formattedLog.message)
+            LogxType.DEBUG      -> Log.d(formattedLog.tag, formattedLog.message)
+            LogxType.THREAD_ID  -> Log.d(formattedLog.tag, formattedLog.message)
+            LogxType.PARENT     -> Log.d(formattedLog.tag, formattedLog.message)
+            LogxType.WARN       -> Log.w(formattedLog.tag, formattedLog.message)
+            LogxType.ERROR      -> Log.e(formattedLog.tag, formattedLog.message)
         }
     }
 
-    private fun saveToFile(formattedLog: FormattedLog) {
+    private fun saveToFile(formattedLog: LogxFormattedData) {
         try {
             fileWriter.writeLog(formattedLog.logType, formattedLog.tag, formattedLog.message)
         } catch (e: Exception) {
@@ -259,9 +264,9 @@ class LogxWriter(private var config: LogxConfig) {
     /**
      * 빠른 로그 레벨 체크 (캐시된 값 사용)
      */
-    private inline fun shouldLog(logType: LogxType): Boolean {
-        return cachedIsDebug && cachedDebugLogTypes.contains(logType)
-    }
+    private inline fun shouldLog(logType: LogxType): Boolean =
+        cachedIsDebug && cachedDebugLogTypes.contains(logType)
+
 
     /**
      * 리소스 정리

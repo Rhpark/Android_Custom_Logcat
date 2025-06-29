@@ -1,7 +1,8 @@
 package kr.open.library.logcat.writer
 
 import android.util.Log
-import kr.open.library.logcat.vo.LogxType
+import kr.open.library.logcat.repo.vo.LogxType
+import kr.open.library.logcat.writer.base.LogxFileWriterImp
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -10,20 +11,23 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 /**
- * 즉시 파일 저장 구현체
- * SRP: 즉시 파일 저장에만 집중
- * 스레드 안전성을 보장하면서 각 로그를 즉시 파일에 저장
+ * Logcat Log 파일 저장 구현체
  */
-class ImmediateLogFileWriter(private val filePath: String) : LogFileWriter {
+class LogxFileWriter(private val filePath: String) : LogxFileWriterImp {
     
     private val lock = ReentrantReadWriteLock()
     private val dateFormatter = SimpleDateFormat("yy-MM-dd, HH:mm:ss.SSS", Locale.US)
     private val fileNameFormatter = SimpleDateFormat("yy-MM-dd", Locale.US)
-    
+
+
+    /**
+     * 로그 파일 작성 시 발생할 수 있는 예외
+     */
+    class LogFileWriteException(message: String, cause: Throwable? = null) : Exception(message, cause)
+
     init {
         createDirectoryIfNeeded()
     }

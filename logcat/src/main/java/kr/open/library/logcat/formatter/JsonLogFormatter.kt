@@ -1,41 +1,29 @@
 package kr.open.library.logcat.formatter
 
 import kr.open.library.logcat.config.LogxConfig
-import kr.open.library.logcat.vo.LogxType
+import kr.open.library.logcat.formatter.base.LogxBaseFormatter
+import kr.open.library.logcat.formatter.base.LogxFormatterImp
+import kr.open.library.logcat.repo.vo.LogxType
 
 /**
- * JSON 전용 로그 포맷터
- * SRP: JSON 포맷팅에만 집중
+ * logcat JSON 전용 포맷터 부분 설정 및 반환
  */
-class JsonLogFormatter(private val config: LogxConfig) : LogFormatter {
-    
-    override fun format(tag: String, message: Any?, logType: LogxType, stackInfo: String): FormattedLog? {
-        if (!shouldFormat(logType)) return null
-        
-        val formattedTag = createFormattedTag(tag)
-        val formattedMessage = formatJsonMessage(message.toString())
-        
-        return FormattedLog(formattedTag, formattedMessage, LogxType.JSON)
-    }
-    
-    private fun shouldFormat(logType: LogxType): Boolean {
-        return config.isDebug && 
-               logType == LogxType.JSON &&
-               config.debugLogTypeList.contains(LogxType.JSON)
-    }
-    
-    private fun createFormattedTag(tag: String): String {
-        return "${config.appName} [$tag] [JSON] :"
-    }
-    
+class JsonLogFormatter(private val config: LogxConfig) :
+    LogxBaseFormatter(config), LogxFormatterImp {
+
+    override fun shouldLogType(logType: LogxType): Boolean = logType == LogxType.JSON
+
     /**
      * JSON 문자열을 보기 좋게 포맷팅
      */
+    override fun formatMessage(message: Any?, stackInfo: String): String = formatJsonMessage(message.toString())
+    
+
     private fun formatJsonMessage(jsonString: String): String {
         val result = StringBuilder()
         var indentLevel = 0
         var inQuotes = false
-        
+
         for (char in jsonString) {
             when (char) {
                 '{', '[' -> {
@@ -70,7 +58,7 @@ class JsonLogFormatter(private val config: LogxConfig) : LogFormatter {
                 else -> result.append(char)
             }
         }
-        
+
         return result.toString()
     }
 }

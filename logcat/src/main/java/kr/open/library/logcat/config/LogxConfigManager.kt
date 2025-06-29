@@ -1,14 +1,12 @@
 package kr.open.library.logcat.config
 
-import kr.open.library.logcat.vo.LogxType
+import kr.open.library.logcat.repo.vo.LogxType
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 /**
  * Logx 설정 관리를 담당하는 클래스
- * SRP: 설정 관리에만 집중
- * 스레드 안전성 보장
  */
 class LogxConfigManager(initialConfig: LogxConfig = LogxConfig()) {
     
@@ -47,7 +45,16 @@ class LogxConfigManager(initialConfig: LogxConfig = LogxConfig()) {
             listeners.remove(listener)
         }
     }
-    
+
+    /**
+     * 설정 변경 리스너 모두 제거
+     */
+    fun removeAllConfigChangeListener() {
+        lock.write {
+            listeners.clear()
+        }
+    }
+
     /**
      * 전체 설정을 업데이트
      */

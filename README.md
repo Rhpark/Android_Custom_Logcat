@@ -257,18 +257,6 @@ Logx.setFilePath("/sdcard/MyApp/logs")
 - Filename: `24-01-15_14-30-25_Log.txt`
 - Content: `24-01-15, 14:30:25.123/D/MyApp : Log Msg`
 
-## ⚡ 성능 최적화 (Performance Optimization)
-
-### 비동기 처리 (Asynchronous Processing)
-
-- 모든 파일 쓰기는 백그라운드에서 처리
-- 채널 기반 버퍼링으로 성능 향상
-- 배치 쓰기로 I/O 횟수 최소화
-
-- All file writing is processed in the background
-- Performance improvement through channel-based buffering
-- Minimizing I/O operations with batch writing
-
 
 ### 메모리 관리 (Memory Management)
 
