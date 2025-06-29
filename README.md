@@ -45,7 +45,7 @@ Android 애플리케이션을 위한 간단한 로깅 라이브러리입니다. 
 
 ```
 dependencies {
-    implementation 'com.github.rhpark:Android_Custom_Logcat:0.9.1'
+    implementation 'com.github.rhpark:Android_Custom_Logcat:0.9.2'
 }
 ```
 
