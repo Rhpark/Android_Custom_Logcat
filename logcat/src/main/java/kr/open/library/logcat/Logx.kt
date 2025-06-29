@@ -4,8 +4,8 @@ import kr.open.library.logcat.config.LogxConfig
 import kr.open.library.logcat.config.LogxConfigManager
 import kr.open.library.logcat.config.LogxDslBuilder
 import kr.open.library.logcat.config.logxConfig
-import kr.open.library.logcat.repo.data.LogxWriter
-import kr.open.library.logcat.repo.vo.LogxType
+import kr.open.library.logcat.runtime.LogxWriter
+import kr.open.library.logcat.moel.LogxType
 import java.util.EnumSet
 
 /**

@@ -1,7 +1,7 @@
-package kr.open.library.logcat.writer
+package kr.open.library.logcat.internal.file_writer
 
-import kr.open.library.logcat.repo.vo.LogxType
-import kr.open.library.logcat.writer.base.LogxFileWriterImp
+import kr.open.library.logcat.moel.LogxType
+import kr.open.library.logcat.internal.file_writer.base.LogxFileWriterImp
 
 /**
  * 파일 저장을 하지 않는 No-Op 구현체

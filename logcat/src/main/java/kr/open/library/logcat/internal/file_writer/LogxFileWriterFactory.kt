@@ -1,7 +1,7 @@
-package kr.open.library.logcat.writer
+package kr.open.library.logcat.internal.file_writer
 
 import kr.open.library.logcat.config.LogxConfig
-import kr.open.library.logcat.writer.base.LogxFileWriterImp
+import kr.open.library.logcat.internal.file_writer.base.LogxFileWriterImp
 
 /**
  * LogFileWriter 생성을 담당하는 팩토리

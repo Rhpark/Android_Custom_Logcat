@@ -1,4 +1,4 @@
-package kr.open.library.logcat.filter.base
+package kr.open.library.logcat.internal.filter.base
 
 /**
  * 로그 필터링을 담당하는 인터페이스

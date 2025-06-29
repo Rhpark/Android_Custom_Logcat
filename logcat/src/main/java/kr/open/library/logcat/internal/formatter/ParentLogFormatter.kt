@@ -1,11 +1,11 @@
-package kr.open.library.logcat.formatter
+package kr.open.library.logcat.internal.formatter
 
 import kr.open.library.logcat.config.LogxConfig
-import kr.open.library.logcat.domain.LogxStackTrace
-import kr.open.library.logcat.formatter.base.LogxFormattedData
-import kr.open.library.logcat.formatter.base.LogxBaseFormatter
-import kr.open.library.logcat.formatter.base.LogxFormatterImp
-import kr.open.library.logcat.repo.vo.LogxType
+import kr.open.library.logcat.internal.stacktrace.LogxStackTrace
+import kr.open.library.logcat.internal.formatter.base.LogxFormattedData
+import kr.open.library.logcat.internal.formatter.base.LogxBaseFormatter
+import kr.open.library.logcat.internal.formatter.base.LogxFormatterImp
+import kr.open.library.logcat.moel.LogxType
 
 /**
  * logcat PARENT 전용 포맷터 부분 설정 및 반환
@@ -14,7 +14,7 @@ class ParentLogFormatter(
     private val config: LogxConfig,
     private val stackTrace: LogxStackTrace,
     private val isExtensions: Boolean = false
-) : LogxBaseFormatter(config), LogxFormatterImp{
+) : LogxBaseFormatter(config), LogxFormatterImp {
 
     override fun isIncludeLogType(logType: LogxType): Boolean = logType == LogxType.PARENT
 

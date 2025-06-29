@@ -1,8 +1,5 @@
 package kr.open.library.logcat.config
 
-import android.os.Environment
-import kr.open.library.logcat.repo.vo.LogxType
-
 @DslMarker
 annotation class LogxConfigDsl
 

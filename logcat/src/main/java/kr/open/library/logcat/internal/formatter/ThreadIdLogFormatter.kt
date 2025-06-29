@@ -1,9 +1,9 @@
-package kr.open.library.logcat.formatter
+package kr.open.library.logcat.internal.formatter
 
 import kr.open.library.logcat.config.LogxConfig
-import kr.open.library.logcat.formatter.base.LogxBaseFormatter
-import kr.open.library.logcat.formatter.base.LogxFormatterImp
-import kr.open.library.logcat.repo.vo.LogxType
+import kr.open.library.logcat.internal.formatter.base.LogxBaseFormatter
+import kr.open.library.logcat.internal.formatter.base.LogxFormatterImp
+import kr.open.library.logcat.moel.LogxType
 
 /**
  * logcat THREAD_ID 전용 포맷터 부분 설정 및 반환

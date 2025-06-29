@@ -1,16 +1,19 @@
-package kr.open.library.logcat.repo.data
+package kr.open.library.logcat.runtime
 
 import android.util.Log
 import kr.open.library.logcat.config.LogxConfig
-import kr.open.library.logcat.domain.LogxStackTrace
-import kr.open.library.logcat.filter.DefaultLogFilter
-import kr.open.library.logcat.filter.base.LogFilterImp
-import kr.open.library.logcat.formatter.*
-import kr.open.library.logcat.formatter.base.LogxFormattedData
-import kr.open.library.logcat.formatter.base.LogxFormatterImp
-import kr.open.library.logcat.repo.vo.LogxType
-import kr.open.library.logcat.writer.base.LogxFileWriterImp
-import kr.open.library.logcat.writer.LogxFileWriterFactory
+import kr.open.library.logcat.internal.stacktrace.LogxStackTrace
+import kr.open.library.logcat.internal.filter.DefaultLogFilter
+import kr.open.library.logcat.internal.filter.base.LogFilterImp
+import kr.open.library.logcat.internal.formatter.base.LogxFormattedData
+import kr.open.library.logcat.internal.formatter.base.LogxFormatterImp
+import kr.open.library.logcat.internal.formatter.DefaultLogFormatter
+import kr.open.library.logcat.internal.formatter.JsonLogFormatter
+import kr.open.library.logcat.internal.formatter.ParentLogFormatter
+import kr.open.library.logcat.internal.formatter.ThreadIdLogFormatter
+import kr.open.library.logcat.moel.LogxType
+import kr.open.library.logcat.internal.file_writer.base.LogxFileWriterImp
+import kr.open.library.logcat.internal.file_writer.LogxFileWriterFactory
 
 /**
  * @param LogxStackTraceMetaData.class 정보를 얻어와 처리

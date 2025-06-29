@@ -1,8 +1,8 @@
-package kr.open.library.logcat.writer
+package kr.open.library.logcat.internal.file_writer
 
 import android.util.Log
-import kr.open.library.logcat.repo.vo.LogxType
-import kr.open.library.logcat.writer.base.LogxFileWriterImp
+import kr.open.library.logcat.moel.LogxType
+import kr.open.library.logcat.internal.file_writer.base.LogxFileWriterImp
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter

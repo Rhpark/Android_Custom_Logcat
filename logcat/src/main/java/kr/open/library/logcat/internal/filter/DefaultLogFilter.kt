@@ -1,7 +1,7 @@
-package kr.open.library.logcat.filter
+package kr.open.library.logcat.internal.filter
 
 import kr.open.library.logcat.config.LogxConfig
-import kr.open.library.logcat.filter.base.LogFilterImp
+import kr.open.library.logcat.internal.filter.base.LogFilterImp
 
 
 /**

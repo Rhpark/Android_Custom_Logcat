@@ -1,6 +1,6 @@
 package kr.open.library.logcat
 
-import kr.open.library.logcat.repo.vo.LogxType
+import kr.open.library.logcat.moel.LogxType
 import java.util.EnumSet
 
 /**

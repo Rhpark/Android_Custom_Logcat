@@ -1,4 +1,4 @@
-package kr.open.library.logcat.domain
+package kr.open.library.logcat.internal.stacktrace
 
 import android.util.Log
 import kr.open.library.logcat.Logx

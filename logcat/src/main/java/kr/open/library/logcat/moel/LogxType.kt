@@ -1,4 +1,4 @@
-package kr.open.library.logcat.repo.vo
+package kr.open.library.logcat.moel
 
 public enum class LogxType(public val logTypeString: String) {
     VERBOSE("V"),  //Log.v
