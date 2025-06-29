@@ -11,7 +11,9 @@ import kr.open.library.logcat.repo.vo.LogxType
 class ThreadIdLogFormatter(private val config: LogxConfig) :
     LogxBaseFormatter(config), LogxFormatterImp {
 
-    override fun shouldLogType(logType: LogxType): Boolean = logType == LogxType.THREAD_ID
+    override fun getTagSuffix(): String = " [T_ID] :"
+
+    override fun isIncludeLogType(logType: LogxType): Boolean = logType == LogxType.THREAD_ID
 
     override fun formatMessage(message: Any?, stackInfo: String): String =
         "[${Thread.currentThread().id}]${stackInfo}${message ?: ""}"

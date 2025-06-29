@@ -11,7 +11,9 @@ import kr.open.library.logcat.repo.vo.LogxType
 class JsonLogFormatter(private val config: LogxConfig) :
     LogxBaseFormatter(config), LogxFormatterImp {
 
-    override fun shouldLogType(logType: LogxType): Boolean = logType == LogxType.JSON
+    override fun isIncludeLogType(logType: LogxType): Boolean = logType == LogxType.JSON
+
+    override fun getTagSuffix(): String = " [JSON] :"
 
     /**
      * JSON 문자열을 보기 좋게 포맷팅

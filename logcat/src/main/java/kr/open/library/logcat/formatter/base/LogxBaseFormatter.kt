@@ -14,22 +14,16 @@ abstract class LogxBaseFormatter(private val config: LogxConfig) : LogxFormatter
 
     final override fun format(tag: String, message: Any?, logType: LogxType, stackInfo: String): LogxFormattedData? =
         if (!shouldFormat(logType)) null
-        else LogxFormattedData(createFormattedTag(tag, logType), formatMessage(message, stackInfo), logType)
+        else LogxFormattedData(createFormattedTag(tag), formatMessage(message, stackInfo), logType)
 
 
     protected open fun shouldFormat(logType: LogxType): Boolean =
-        config.isDebug && shouldLogType(logType) && config.debugLogTypeList.contains(logType)
+        config.isDebug && isIncludeLogType(logType) && config.debugLogTypeList.contains(logType)
 
-    protected fun createFormattedTag(tag: String, logType: LogxType): String =
-        "${config.appName} [$tag]${getTypeString(logType)}"
+    protected fun createFormattedTag(tag: String): String = "${config.appName} [$tag]${getTagSuffix()}"
 
-    protected fun getTypeString(logType: LogxType): String = when (logType) {
-        LogxType.THREAD_ID -> " [T_ID] :"
-        LogxType.PARENT -> " [PARENT] :"
-        LogxType.JSON -> " [JSON] :"
-        else -> " :"
-    }
 
-    protected abstract fun shouldLogType(logType: LogxType): Boolean
+    protected abstract fun getTagSuffix():String
+    protected abstract fun isIncludeLogType(logType: LogxType): Boolean
     protected abstract fun formatMessage(message: Any?, stackInfo: String): String
 }

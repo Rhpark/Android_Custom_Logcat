@@ -11,7 +11,12 @@ import kr.open.library.logcat.repo.vo.LogxType
 class DefaultLogFormatter(private val config: LogxConfig) :
     LogxBaseFormatter(config), LogxFormatterImp {
 
-    override fun shouldLogType(logType: LogxType): Boolean = true
+    override fun isIncludeLogType(logType: LogxType): Boolean = (
+        logType == LogxType.VERBOSE || logType == LogxType.DEBUG ||
+        logType == LogxType.INFO || logType == LogxType.WARN || logType == LogxType.ERROR
+    )
+
+    override fun getTagSuffix(): String = " :"
 
     override fun formatMessage(message: Any?, stackInfo: String): String = "$stackInfo${message ?: ""}"
 }

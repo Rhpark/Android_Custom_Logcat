@@ -16,7 +16,9 @@ class ParentLogFormatter(
     private val isExtensions: Boolean = false
 ) : LogxBaseFormatter(config), LogxFormatterImp{
 
-    override fun shouldLogType(logType: LogxType): Boolean = logType == LogxType.PARENT
+    override fun isIncludeLogType(logType: LogxType): Boolean = logType == LogxType.PARENT
+
+    override fun getTagSuffix(): String = " [PARENT] :"
 
     override fun formatMessage(message: Any?, stackInfo: String): String = "┖${stackInfo}${message ?: ""}"
     
