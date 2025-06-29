@@ -307,10 +307,8 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 Logx (메인 API)
 ├── ILogx (인터페이스)
 ├── LogxConfig (설정 관리)
-├── LogxWriter (로그 처리)
-├── LogxFileManager (파일 관리)
+├── LogxWriter (로그 처리 & 파일 관리)
 ├── LogxStackTrace (스택 추적)
-└── Extensions (확장 함수)
 ```
 
 ### 데이터 플로우
