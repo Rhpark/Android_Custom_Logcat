@@ -8,7 +8,7 @@ publishing {
     publications {
         register("release", MavenPublication) {
             groupId = "com.github.Rhpark"
-            artifactId = "logcat"
+            artifactId = "Android_Custom_Logcat"
             version = libs.versions.library.get()
 
             afterEvaluate {
@@ -18,7 +18,7 @@ publishing {
 
         register("debug", MavenPublication) {
             groupId = "com.github.Rhpark"
-            artifactId = "logcat"
+            artifactId = "Android_Custom_Logcat"
             version = libs.versions.library.get()
 
             afterEvaluate {
