@@ -1,7 +1,7 @@
 package kr.open.library.logcat.config
 
-import android.os.Environment
-import kr.open.library.logcat.moel.LogxType
+import android.content.Context
+import kr.open.library.logcat.model.LogxType
 import java.util.EnumSet
 
 /**
@@ -12,7 +12,7 @@ data class LogxConfig(
     val isDebug: Boolean = true,
     val isDebugFilter: Boolean = false,
     val isDebugSave: Boolean = false,
-    val saveFilePath: String = getDefaultLogPath(),
+    val saveFilePath: String = LogxPathUtils.getDefaultLogPath(),
     val appName: String = "RhPark",
     val debugFilterList: Set<String> = emptySet(),
     val debugLogTypeList: EnumSet<LogxType> = EnumSet.allOf(LogxType::class.java)
@@ -30,16 +30,21 @@ data class LogxConfig(
     companion object {
 
         /**
-         * API 레벨에 따른 안전한 기본 로그 경로 제공
+         * Context 기반 최적 설정 생성 (권장)
          */
-        private fun getDefaultLogPath(): String {
-            return try {
-                @Suppress("DEPRECATION")
-                Environment.getExternalStorageDirectory().path
-            } catch (e: Exception) {
-                // Fallback to internal storage
-                "/data/data/logs"
-            }
+        fun createDefault(context: Context): LogxConfig {
+            return LogxConfig(
+                saveFilePath = LogxPathUtils.getScopedStoragePath(context)
+            )
+        }
+
+        /**
+         * Context 없을 때 fallback 설정
+         */
+        fun createFallback(): LogxConfig {
+            return LogxConfig(
+                saveFilePath = LogxPathUtils.getDefaultLogPath()
+            )
         }
     }
 }

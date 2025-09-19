@@ -1,6 +1,6 @@
 package kr.open.library.logcat.internal.file_writer
 
-import kr.open.library.logcat.moel.LogxType
+import kr.open.library.logcat.model.LogxType
 import kr.open.library.logcat.internal.file_writer.base.LogxFileWriterImp
 
 /**

@@ -3,7 +3,7 @@ package kr.open.library.logcat.internal.formatter
 import kr.open.library.logcat.config.LogxConfig
 import kr.open.library.logcat.internal.formatter.base.LogxBaseFormatter
 import kr.open.library.logcat.internal.formatter.base.LogxFormatterImp
-import kr.open.library.logcat.moel.LogxType
+import kr.open.library.logcat.model.LogxType
 
 /**
  * logcat THREAD_ID 전용 포맷터 부분 설정 및 반환

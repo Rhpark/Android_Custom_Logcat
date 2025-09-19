@@ -1,11 +1,13 @@
 package kr.open.library.logcat
 
+import android.content.Context
 import kr.open.library.logcat.config.LogxConfig
 import kr.open.library.logcat.config.LogxConfigManager
+import kr.open.library.logcat.config.LogxPathUtils
 import kr.open.library.logcat.config.LogxDslBuilder
 import kr.open.library.logcat.config.logxConfig
 import kr.open.library.logcat.runtime.LogxWriter
-import kr.open.library.logcat.moel.LogxType
+import kr.open.library.logcat.model.LogxType
 import java.util.EnumSet
 
 /**
@@ -25,6 +27,9 @@ import java.util.EnumSet
  */
 object Logx : ILogx {
 
+    @Volatile
+    private var appContext: Context? = null
+
     public const val DEFAULT_TAG = ""
 
     public val configManager = LogxConfigManager()
@@ -37,6 +42,28 @@ object Logx : ILogx {
                 logWriter.updateConfig(newConfig)
             }
         })
+    }
+
+    /**
+     * Context 기반 초기화 (권장)
+     * 신규 사용자를 위한 최적 경로 자동 설정
+     */
+    @Synchronized
+    override fun init(context: Context) {
+        appContext = context.applicationContext
+
+        // Context 기반 최적 설정으로 업데이트
+        val contextConfig = LogxConfig.createDefault(context)
+        configManager.updateConfig(contextConfig)
+    }
+
+    /**
+     * 현재 Context 기반 최적 경로 반환
+     */
+    fun getOptimalLogPath(): String {
+        return appContext?.let {
+            LogxPathUtils.getScopedStoragePath(it)
+        } ?: configManager.config.saveFilePath
     }
 
     // 설정 관리 메서드들 - ConfigManager에 위임

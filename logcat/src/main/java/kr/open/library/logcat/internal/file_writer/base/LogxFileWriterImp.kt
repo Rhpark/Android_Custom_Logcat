@@ -1,6 +1,6 @@
 package kr.open.library.logcat.internal.file_writer.base
 
-import kr.open.library.logcat.moel.LogxType
+import kr.open.library.logcat.model.LogxType
 
 /**
  * 로그 파일 작성 전략을 위한 인터페이스

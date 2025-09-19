@@ -11,7 +11,7 @@ import kr.open.library.logcat.internal.formatter.DefaultLogFormatter
 import kr.open.library.logcat.internal.formatter.JsonLogFormatter
 import kr.open.library.logcat.internal.formatter.ParentLogFormatter
 import kr.open.library.logcat.internal.formatter.ThreadIdLogFormatter
-import kr.open.library.logcat.moel.LogxType
+import kr.open.library.logcat.model.LogxType
 import kr.open.library.logcat.internal.file_writer.base.LogxFileWriterImp
 import kr.open.library.logcat.internal.file_writer.LogxFileWriterFactory
 

@@ -1,6 +1,6 @@
 package kr.open.library.logcat.internal.formatter.base
 
-import kr.open.library.logcat.moel.LogxType
+import kr.open.library.logcat.model.LogxType
 
 /**
  * 로그 포맷팅을 담당하는 인터페이스

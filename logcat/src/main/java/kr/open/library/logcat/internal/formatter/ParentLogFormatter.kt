@@ -5,7 +5,7 @@ import kr.open.library.logcat.internal.stacktrace.LogxStackTrace
 import kr.open.library.logcat.internal.formatter.base.LogxFormattedData
 import kr.open.library.logcat.internal.formatter.base.LogxBaseFormatter
 import kr.open.library.logcat.internal.formatter.base.LogxFormatterImp
-import kr.open.library.logcat.moel.LogxType
+import kr.open.library.logcat.model.LogxType
 
 /**
  * logcat PARENT 전용 포맷터 부분 설정 및 반환

@@ -6,7 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kr.open.library.logcat.moel.LogxType
+import kr.open.library.logcat.model.LogxType
 import kr.open.library.logcat.internal.file_writer.base.LogxFileWriterImp
 import java.io.BufferedWriter
 import java.io.File

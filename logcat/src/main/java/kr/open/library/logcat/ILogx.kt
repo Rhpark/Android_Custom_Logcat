@@ -1,6 +1,7 @@
 package kr.open.library.logcat
 
-import kr.open.library.logcat.moel.LogxType
+import android.content.Context
+import kr.open.library.logcat.model.LogxType
 import java.util.EnumSet
 
 /**
@@ -8,6 +9,10 @@ import java.util.EnumSet
  * 테스트 가능성과 확장성을 위한 추상화 레이어
  */
 interface ILogx {
+
+
+    fun init(context: Context)
+
     // 기본 로깅 메서드
     fun v()
     fun v(msg: Any? = "")

@@ -1,6 +1,6 @@
 package kr.open.library.logcat.config
 
-import kr.open.library.logcat.moel.LogxType
+import kr.open.library.logcat.model.LogxType
 
 
 /**

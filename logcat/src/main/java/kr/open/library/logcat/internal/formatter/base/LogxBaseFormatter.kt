@@ -1,7 +1,7 @@
 package kr.open.library.logcat.internal.formatter.base
 
 import kr.open.library.logcat.config.LogxConfig
-import kr.open.library.logcat.moel.LogxType
+import kr.open.library.logcat.model.LogxType
 
 /**
  * logcat 기본 포맷터 부분 설정 및 반환 추상 클래스
