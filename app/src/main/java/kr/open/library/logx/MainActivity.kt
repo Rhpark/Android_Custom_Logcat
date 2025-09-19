@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
         Logx.i("앱 시작", "Logx 저장소 설정 테스트 앱이 시작되었습니다")
         Logx.i("사용법", "버튼을 눌러서 다양한 저장소 설정을 테스트해보세요")
 
-        // JSON 로그 테스트 (이상 여부 확인)
+        // JSON 로그 테스트 (이상 여부 확인용)
         testJsonLogs()
     }
 
