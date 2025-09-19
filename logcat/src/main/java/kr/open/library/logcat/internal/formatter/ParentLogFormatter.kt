@@ -11,14 +11,14 @@ import kr.open.library.logcat.model.LogxType
  * logcat PARENT 전용 포맷터 부분 설정 및 반환
  */
 class ParentLogFormatter(
-    private val config: LogxConfig,
+    config: LogxConfig,
     private val stackTrace: LogxStackTrace,
     private val isExtensions: Boolean = false
 ) : LogxBaseFormatter(config), LogxFormatterImp {
 
     override fun isIncludeLogType(logType: LogxType): Boolean = logType == LogxType.PARENT
 
-    override fun getTagSuffix(): String = " [PARENT] :"
+    override fun getTagSuffix(): String = "[PARENT]"
 
     override fun formatMessage(message: Any?, stackInfo: String): String = "┖${stackInfo}${message ?: ""}"
     

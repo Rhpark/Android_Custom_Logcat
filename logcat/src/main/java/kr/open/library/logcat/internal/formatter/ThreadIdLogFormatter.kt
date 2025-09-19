@@ -8,10 +8,10 @@ import kr.open.library.logcat.model.LogxType
 /**
  * logcat THREAD_ID 전용 포맷터 부분 설정 및 반환
  */
-class ThreadIdLogFormatter(private val config: LogxConfig) :
+class ThreadIdLogFormatter(config: LogxConfig) :
     LogxBaseFormatter(config), LogxFormatterImp {
 
-    override fun getTagSuffix(): String = " [T_ID] :"
+    override fun getTagSuffix(): String = "[T_ID]"
 
     override fun isIncludeLogType(logType: LogxType): Boolean = logType == LogxType.THREAD_ID
 

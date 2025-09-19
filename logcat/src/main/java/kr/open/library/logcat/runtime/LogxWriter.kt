@@ -17,23 +17,26 @@ import kr.open.library.logcat.internal.file_writer.LogxFileWriterFactory
 
 /**
  * @param LogxStackTraceMetaData.class 정보를 얻어와 처리
- * Logcat 출력 & 파일 저장을 담당
- * - 포맷팅: LogFormatter 구현체들이 담당  
+ * Logcat 출력 & 파일 저장을 담당 (Android Lifecycle 지원)
+ * - 포맷팅: LogFormatter 구현체들이 담당
  * - 필터링: LogFilter가 담당
- * - 파일 저장: LogFileWriter가 담당
+ * - 파일 저장: LogFileWriter가 담당 (Lifecycle 기반 플러시)
  * - 로그 출력 여부는 LogxConfig에 의해 결정됨
  */
-class LogxWriter(private var config: LogxConfig) {
+class LogxWriter(
+    private var config: LogxConfig,
+    private val context: android.content.Context? = null
+) {
 
     private val stackTrace by lazy { LogxStackTrace() }
-    
+
     // 스택 트레이스 캐싱
     private val stackInfoCache = mutableMapOf<String, String>()
     private var lastStackFrameHash = 0
-    
-    // 초기화
+
+    // 초기화 (Context를 FileWriter에 전달)
     private var logFilter: LogFilterImp = DefaultLogFilter(config)
-    private var fileWriter: LogxFileWriterImp = LogxFileWriterFactory.create(config)
+    private var fileWriter: LogxFileWriterImp = LogxFileWriterFactory. create(config, context)
 
     // 포맷터들
     private var defaultFormatter = DefaultLogFormatter(config)
@@ -65,9 +68,9 @@ class LogxWriter(private var config: LogxConfig) {
         // 기존 리소스 정리
         fileWriter.cleanup()
         
-        // 새 인스턴스 생성
+        // 새 인스턴스 생성 (Context를 FileWriter에 전달)
         logFilter = DefaultLogFilter(config)
-        fileWriter = LogxFileWriterFactory.create(config)
+        fileWriter = LogxFileWriterFactory.create(config, context)
         
         // 포맷터들 재생성
         defaultFormatter = DefaultLogFormatter(config)

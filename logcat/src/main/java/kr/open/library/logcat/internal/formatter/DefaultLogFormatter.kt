@@ -8,7 +8,7 @@ import kr.open.library.logcat.model.LogxType
 /**
  * logcat 기본 포맷터 부분 설정 및 반환
  */
-class DefaultLogFormatter(private val config: LogxConfig) :
+class DefaultLogFormatter(config: LogxConfig) :
     LogxBaseFormatter(config), LogxFormatterImp {
 
     override fun isIncludeLogType(logType: LogxType): Boolean = (
@@ -16,7 +16,7 @@ class DefaultLogFormatter(private val config: LogxConfig) :
         logType == LogxType.INFO || logType == LogxType.WARN || logType == LogxType.ERROR
     )
 
-    override fun getTagSuffix(): String = " :"
+    override fun getTagSuffix(): String = ""
 
     override fun formatMessage(message: Any?, stackInfo: String): String = "$stackInfo${message ?: ""}"
 }

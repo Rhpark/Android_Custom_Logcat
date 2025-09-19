@@ -4,6 +4,7 @@ import android.content.Context
 import kr.open.library.logcat.config.LogxConfig
 import kr.open.library.logcat.config.LogxConfigManager
 import kr.open.library.logcat.config.LogxPathUtils
+import kr.open.library.logcat.config.LogxStorageType
 import kr.open.library.logcat.config.LogxDslBuilder
 import kr.open.library.logcat.config.logxConfig
 import kr.open.library.logcat.runtime.LogxWriter
@@ -33,7 +34,7 @@ object Logx : ILogx {
     public const val DEFAULT_TAG = ""
 
     public val configManager = LogxConfigManager()
-    public val logWriter = LogxWriter(configManager.config)
+    public var logWriter = LogxWriter(configManager.config)
 
     init {
         // 설정 변경 시 LogxWriter에 자동 전파
@@ -47,23 +48,70 @@ object Logx : ILogx {
     /**
      * Context 기반 초기화 (권장)
      * 신규 사용자를 위한 최적 경로 자동 설정
+     * Android Lifecycle 기반 플러시 시스템 활성화
      */
     @Synchronized
     override fun init(context: Context) {
         appContext = context.applicationContext
+
+        // Context가 설정되면 LogxWriter를 Context와 함께 재생성
+        logWriter = LogxWriter(configManager.config, appContext)
 
         // Context 기반 최적 설정으로 업데이트
         val contextConfig = LogxConfig.createDefault(context)
         configManager.updateConfig(contextConfig)
     }
 
+
     /**
-     * 현재 Context 기반 최적 경로 반환
+     * 저장소 타입 설정
      */
-    fun getOptimalLogPath(): String {
-        return appContext?.let {
-            LogxPathUtils.getScopedStoragePath(it)
-        } ?: configManager.config.saveFilePath
+    fun setStorageType(storageType: LogxStorageType) {
+        appContext?.let { context ->
+            val newConfig = LogxConfig.create(context, storageType)
+            configManager.updateConfig(newConfig)
+        }
+    }
+
+    /**
+     * 내부 저장소로 설정
+     */
+    fun setInternalStorage() {
+        setStorageType(LogxStorageType.INTERNAL)
+    }
+
+    /**
+     * 앱 전용 외부 저장소로 설정 (권한 불필요)
+     */
+    fun setAppExternalStorage() {
+        setStorageType(LogxStorageType.APP_EXTERNAL)
+    }
+
+    /**
+     * 공용 외부 저장소로 설정 (권한 필요)
+     */
+    fun setPublicExternalStorage() {
+        setStorageType(LogxStorageType.PUBLIC_EXTERNAL)
+    }
+
+    /**
+     * 현재 저장소 타입별 경로 정보 반환
+     */
+    fun getStorageInfo(): Map<LogxStorageType, String> {
+        return appContext?.let { context ->
+            mapOf(
+                LogxStorageType.INTERNAL to LogxPathUtils.getInternalLogPath(context),
+                LogxStorageType.APP_EXTERNAL to LogxPathUtils.getAppExternalLogPath(context),
+                LogxStorageType.PUBLIC_EXTERNAL to LogxPathUtils.getPublicExternalLogPath(context)
+            )
+        } ?: emptyMap()
+    }
+
+    /**
+     * 현재 저장소 타입에서 권한이 필요한지 확인
+     */
+    fun requiresStoragePermission(): Boolean {
+        return LogxPathUtils.requiresPermission(configManager.config.storageType)
     }
 
     // 설정 관리 메서드들 - ConfigManager에 위임

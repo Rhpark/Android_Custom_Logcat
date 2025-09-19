@@ -1,5 +1,6 @@
 package kr.open.library.logcat.internal.file_writer
 
+import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,10 +20,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 
 /**
- * Logcat Log 파일 저장 구현체
+ * Logcat Log 파일 저장 구현체 (Android Lifecycle 기반 플러시 지원)
  */
-class LogxFileWriter(private val filePath: String) : LogxFileWriterImp {
-    
+class LogxFileWriter(
+    private val filePath: String,
+    private val context: Context? = null
+) : LogxFileWriterImp {
+
     private val lock = ReentrantReadWriteLock()
     private val dateFormatter = SimpleDateFormat("yy-MM-dd, HH:mm:ss.SSS", Locale.US)
     private val fileNameFormatter = SimpleDateFormat("yy-MM-dd", Locale.US)
@@ -30,6 +34,7 @@ class LogxFileWriter(private val filePath: String) : LogxFileWriterImp {
     private companion object {
         private val logWriterScope = CoroutineScope(Dispatchers.IO + Job()) // Singleton
     }
+
     /**
      * 로그 파일 작성 시 발생할 수 있는 예외
      */
@@ -37,7 +42,7 @@ class LogxFileWriter(private val filePath: String) : LogxFileWriterImp {
 
     init {
         createDirectoryIfNeeded()
-        finishCheck()
+        setupAndroidLifecycleFlush()
     }
     
     override fun writeLog(logType: LogxType, tag: String, message: String) {
@@ -116,24 +121,56 @@ class LogxFileWriter(private val filePath: String) : LogxFileWriterImp {
         }
     }
 
-    private fun finishCheck() {
-        // 앱 종료 시 로그 저장
-        Runtime.getRuntime().addShutdownHook(Thread {
-            shutdownLogger()
-        })
+    /**
+     * Android Lifecycle 기반 플러시 시스템 설정
+     * Runtime.addShutdownHook를 대체하는 안전한 방식
+     */
+    private fun setupAndroidLifecycleFlush() {
+        try {
+            if (context != null) {
+                // Android Lifecycle 기반 플러시 매니저 초기화
+                val flushManager = LogxLifecycleFlushManager.getInstance()
+                flushManager.initialize(context, logWriterScope)
+                Log.d("LogxFileWriter", "Android Lifecycle flush manager initialized")
+            } else {
+                // Context가 없는 경우 fallback (라이브러리 외부 사용 시)
+                Log.w("LogxFileWriter", "No Context provided - using fallback flush mechanism")
+                setupFallbackFlush()
+            }
+        } catch (e: Exception) {
+            Log.e("LogxFileWriter", "Failed to setup lifecycle flush", e)
+            setupFallbackFlush()
+        }
+    }
 
-        // 크래시 발생 시 로그 저장
-        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
-            shutdownLogger()
-            throwable.printStackTrace()
+    /**
+     * Context가 없을 때 사용하는 fallback 플러시 (최소한의 안전장치)
+     */
+    private fun setupFallbackFlush() {
+        try {
+            // 크래시 시에만 최소한의 플러시 (기존 핸들러 존중)
+            val originalHandler = Thread.getDefaultUncaughtExceptionHandler()
+            Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+                try {
+                    shutdownLogger()
+                } catch (e: Exception) {
+                    Log.e("LogxFileWriter", "Error during fallback flush", e)
+                } finally {
+                    originalHandler?.uncaughtException(thread, throwable)
+                        ?: throwable.printStackTrace()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("LogxFileWriter", "Failed to setup fallback flush", e)
         }
     }
 
     private fun shutdownLogger() {
         try {
             logWriterScope.cancel() // 모든 코루틴 작업 취소
+            Log.d("LogxFileWriter", "LogWriter shutdown completed")
         } catch (e: Exception) {
-            Log.e("ImmediateLogFileWriter", "[Error] Error during logger shutdown: ${e.message}", e)
+            Log.e("LogxFileWriter", "[Error] Error during logger shutdown: ${e.message}", e)
         }
     }
 }

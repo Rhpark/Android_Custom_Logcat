@@ -13,6 +13,7 @@ data class LogxConfig(
     val isDebugFilter: Boolean = false,
     val isDebugSave: Boolean = false,
     val saveFilePath: String = LogxPathUtils.getDefaultLogPath(),
+    val storageType: LogxStorageType = LogxStorageType.APP_EXTERNAL,
     val appName: String = "RhPark",
     val debugFilterList: Set<String> = emptySet(),
     val debugLogTypeList: EnumSet<LogxType> = EnumSet.allOf(LogxType::class.java)
@@ -32,9 +33,40 @@ data class LogxConfig(
         /**
          * Context 기반 최적 설정 생성 (권장)
          */
-        fun createDefault(context: Context): LogxConfig {
+        fun createDefault(context: Context, storageType: LogxStorageType = LogxStorageType.APP_EXTERNAL): LogxConfig {
             return LogxConfig(
-                saveFilePath = LogxPathUtils.getScopedStoragePath(context)
+                saveFilePath = LogxPathUtils.getLogPath(context, storageType),
+                storageType = storageType
+            )
+        }
+
+        /**
+         * 내부 저장소 전용 설정
+         */
+        fun createInternal(context: Context): LogxConfig {
+            return LogxConfig(
+                saveFilePath = LogxPathUtils.getInternalLogPath(context),
+                storageType = LogxStorageType.INTERNAL
+            )
+        }
+
+        /**
+         * 앱 전용 외부 저장소 설정 (권한 불필요)
+         */
+        fun createAppExternal(context: Context): LogxConfig {
+            return LogxConfig(
+                saveFilePath = LogxPathUtils.getAppExternalLogPath(context),
+                storageType = LogxStorageType.APP_EXTERNAL
+            )
+        }
+
+        /**
+         * 공용 외부 저장소 설정 (권한 필요)
+         */
+        fun createPublicExternal(context: Context): LogxConfig {
+            return LogxConfig(
+                saveFilePath = LogxPathUtils.getPublicExternalLogPath(context),
+                storageType = LogxStorageType.PUBLIC_EXTERNAL
             )
         }
 
@@ -43,8 +75,20 @@ data class LogxConfig(
          */
         fun createFallback(): LogxConfig {
             return LogxConfig(
-                saveFilePath = LogxPathUtils.getDefaultLogPath()
+                saveFilePath = LogxPathUtils.getDefaultLogPath(),
+                storageType = LogxStorageType.INTERNAL
             )
+        }
+
+        /**
+         * 저장소 타입별 설정 생성 헬퍼
+         */
+        fun create(context: Context, storageType: LogxStorageType): LogxConfig {
+            return when (storageType) {
+                LogxStorageType.INTERNAL -> createInternal(context)
+                LogxStorageType.APP_EXTERNAL -> createAppExternal(context)
+                LogxStorageType.PUBLIC_EXTERNAL -> createPublicExternal(context)
+            }
         }
     }
 }

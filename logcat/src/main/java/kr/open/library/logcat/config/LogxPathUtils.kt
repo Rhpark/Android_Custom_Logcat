@@ -2,45 +2,90 @@ package kr.open.library.logcat.config
 
 import android.content.Context
 import android.os.Build
+import android.os.Environment
 
+/**
+ * 저장소 타입 정의
+ */
+enum class LogxStorageType {
+    INTERNAL,           // 앱 내부 저장소
+    APP_EXTERNAL,       // 앱 전용 외부 저장소 (권한 불필요)
+    PUBLIC_EXTERNAL     // 공용 외부 저장소 (권한 필요)
+}
 
 /**
  * 로그 파일 경로 관련 유틸리티
  */
 object LogxPathUtils {
 
+    private val LOG_DIR_NAME = "AppLogs"
     /**
      * 안전한 기본 로그 경로 (Context 없을 때 fallback)
      */
     fun getDefaultLogPath(): String {
-        return "/data/data/logs"
+        return "/data/data/$LOG_DIR_NAME"
     }
 
     /**
-     * 앱 전용 로그 디렉토리 경로 (권한 불필요)
+     * 저장소 타입별 로그 경로 반환
      */
-    fun getAppLogPath(context: Context): String {
-        return context.getExternalFilesDir("logs")?.absolutePath
-            ?: context.filesDir.absolutePath + "/logs"
+    fun getLogPath(context: Context, storageType: LogxStorageType): String {
+        return when (storageType) {
+            LogxStorageType.INTERNAL -> getInternalLogPath(context)
+            LogxStorageType.APP_EXTERNAL -> getAppExternalLogPath(context)
+            LogxStorageType.PUBLIC_EXTERNAL -> getPublicExternalLogPath(context)
+        }
     }
 
     /**
-     * Scoped Storage 호환 경로 (권장 - 모든 API에서 안전)
+     * 앱 내부 저장소 경로 (항상 권한 불필요)
      */
-    fun getScopedStoragePath(context: Context): String {
-        return getAppLogPath(context)
+    fun getInternalLogPath(context: Context): String {
+        return context.filesDir.absolutePath + "/$LOG_DIR_NAME"
     }
 
     /**
-     * API 레벨별 최적화된 로그 경로
+     * 앱 전용 외부 저장소 경로 (권한 불필요)
      */
-    fun getOptimalLogPath(context: Context): String {
+    fun getAppExternalLogPath(context: Context): String {
+        return context.getExternalFilesDir(LOG_DIR_NAME)?.absolutePath
+            ?: getInternalLogPath(context) // fallback to internal
+    }
+
+    /**
+     * 공용 외부 저장소 경로 (권한 필요)
+     */
+    fun getPublicExternalLogPath(context: Context): String {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // API 29+: Scoped Storage
-            getAppLogPath(context)
+            // API 29+: Scoped Storage에서는 앱 전용 경로를 사용하되 Documents에 저장
+            context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)?.absolutePath + "/$LOG_DIR_NAME"
+                ?: getAppExternalLogPath(context)
         } else {
-            // API 28 이하: 여전히 앱 전용 경로 사용 (권한 불필요)
-            getAppLogPath(context)
+            // API 28 이하: 전통적인 외부 저장소
+            @Suppress("DEPRECATION")
+            Environment.getExternalStorageDirectory().absolutePath + "/$LOG_DIR_NAME"
+        }
+    }
+
+    /**
+     * 저장소 타입별 권한 필요 여부 확인
+     */
+    fun requiresPermission(storageType: LogxStorageType): Boolean {
+        return when (storageType) {
+            LogxStorageType.INTERNAL -> false
+            LogxStorageType.APP_EXTERNAL -> false
+            LogxStorageType.PUBLIC_EXTERNAL -> Build.VERSION.SDK_INT <= Build.VERSION_CODES.P // API 28 이하에서만 권한 필요
+        }
+    }
+
+    /**
+     * 저장소 타입별 사용자 접근 가능 여부
+     */
+    fun isUserAccessible(storageType: LogxStorageType): Boolean {
+        return when (storageType) {
+            LogxStorageType.INTERNAL -> false          // 사용자가 직접 접근 불가
+            LogxStorageType.APP_EXTERNAL -> true       // 파일 관리자로 접근 가능
+            LogxStorageType.PUBLIC_EXTERNAL -> true    // 파일 관리자로 쉽게 접근 가능
         }
     }
 }

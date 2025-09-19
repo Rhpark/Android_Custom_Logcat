@@ -20,7 +20,7 @@ abstract class LogxBaseFormatter(private val config: LogxConfig) : LogxFormatter
     protected open fun shouldFormat(logType: LogxType): Boolean =
         config.isDebug && isIncludeLogType(logType) && config.debugLogTypeList.contains(logType)
 
-    protected fun createFormattedTag(tag: String): String = "${config.appName} [$tag]${getTagSuffix()}"
+    protected fun createFormattedTag(tag: String): String = "${config.appName}[$tag]${getTagSuffix()}"
 
 
     protected abstract fun getTagSuffix():String
